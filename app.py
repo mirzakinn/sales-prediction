@@ -26,34 +26,87 @@ def index():
 def upload_file():
     if request.method == 'POST':
         try:
-            # BURASI SENİN YAPACAĞIN KISIM
-            # Excel dosyasını al ve işle
+            # Dosya kontrolü
+            if 'file' not in request.files:
+                return jsonify({
+                    'success': False,
+                    'message': 'Dosya seçilmedi'
+                }), 400
+                
             file = request.files['file']
+            
+            # Dosya boş mu kontrolü
+            if file.filename == '':
+                return jsonify({
+                    'success': False,
+                    'message': 'Dosya seçilmedi'
+                }), 400
+            
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
                 
-                # Veriyi oku ve işle
-                # df = pd.read_excel(filepath)  # Sen implement edeceksin
-                # Veri analizi ve model eğitimi burada
-                
-                # Şimdilik başarılı response döndür
-                return jsonify({
-                    'success': True,
-                    'message': 'Dosya başarıyla yüklendi ve işlendi',
-                    'filename': filename
-                })
+                # Dosya türüne göre okuma
+                try:
+                    if filename.endswith('.csv'):
+                        df = pd.read_csv(filepath)
+                    else:
+                        df = pd.read_excel(filepath)
+                    
+                    # Veri analizi ve model eğitimi burada
+                    print("=" * 50, flush=True)
+                    print("📊 VERİ ANALİZİ BAŞLADI", flush=True)
+                    print("=" * 50, flush=True)
+                    print(f"📁 Dosya başarıyla okundu: {filename}", flush=True)
+                    print(f"📏 Veri boyutu: {df.shape[0]} satır, {df.shape[1]} sütun", flush=True)
+                    print(f"📋 Sütunlar: {list(df.columns)}", flush=True)
+                    print("📖 İlk 5 satır:", flush=True)
+                    print(df.head().to_string(), flush=True)
+                    
+                    # Veri tipi bilgileri
+                    print("🔍 Veri tipleri:", flush=True)
+                    for col, dtype in df.dtypes.items():
+                        print(f"  {col}: {dtype}", flush=True)
+                    
+                    # Eksik veri kontrolü
+                    missing_data = df.isnull().sum()
+                    if missing_data.sum() > 0:
+                        print("⚠️  Eksik veriler:", flush=True)
+                        for col, count in missing_data[missing_data > 0].items():
+                            print(f"  {col}: {count} eksik değer", flush=True)
+                    else:
+                        print("✅ Eksik veri bulunamadı", flush=True)
+                    
+                    print("=" * 50, flush=True)
+                    
+
+
+                    # Şimdilik başarılı response döndür
+                    return jsonify({
+                        'success': True,
+                        'message': 'Dosya başarıyla yüklendi ve işlendi',
+                        'filename': filename,
+                        'rows': df.shape[0],
+                        'columns': df.shape[1]
+                    })
+                    
+                except Exception as read_error:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Dosya okuma hatası: {str(read_error)}'
+                    }), 500
             else:
                 return jsonify({
                     'success': False,
-                    'message': 'Geçersiz dosya türü'
+                    'message': 'Geçersiz dosya türü. Sadece XLSX, XLS, CSV dosyaları desteklenir.'
                 }), 400
                 
         except Exception as e:
+            print(f"Upload hatası: {str(e)}")
             return jsonify({
                 'success': False,
-                'message': str(e)
+                'message': f'Dosya yükleme hatası: {str(e)}'
             }), 500
     
     return render_template('upload.html')
@@ -88,4 +141,7 @@ def predict():
     return jsonify({'prediction': 'Bu kısım henüz implement edilmedi'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    print("Flask uygulaması başlatılıyor...")
+    print(f"Upload klasörü: {app.config['UPLOAD_FOLDER']}")
+    print(f"Desteklenen dosya türleri: {ALLOWED_EXTENSIONS}")
+    app.run(debug=True, host='127.0.0.1', port=5000)
