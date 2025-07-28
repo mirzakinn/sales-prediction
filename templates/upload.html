@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Page Header -->
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-primary">
+                <i class="fas fa-cloud-upload-alt me-3"></i>Satış Verilerini Yükle
+            </h2>
+            <p class="lead text-muted">
+                Excel veya CSV formatındaki satış verilerinizi yükleyerek tahmin modeli oluşturun
+            </p>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">
+                    <i class="fas fa-file-upload me-2"></i>Dosya Yükleme
+                </h4>
+            </div>
+            <div class="card-body p-5">
+                <!-- Upload Form -->
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-area text-center p-5 mb-4" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Dosyanızı sürükleyip bırakın veya seçin</h5>
+                        <p class="text-muted small">Desteklenen formatlar: XLSX, XLS, CSV (Max: 16MB)</p>
+                        
+                        <input type="file" class="form-control d-none" id="fileInput" name="file" 
+                               accept=".xlsx,.xls,.csv" required>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Dosya Seç
+                        </button>
+                    </div>
+
+                    <!-- File Info -->
+                    <div id="fileInfo" class="d-none">
+                        <div class="alert alert-info">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-excel fa-2x me-3"></i>
+                                <div>
+                                    <strong id="fileName"></strong>
+                                    <br>
+                                    <small id="fileSize" class="text-muted"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="clearFile()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Processing Options -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tarih Sütunu</label>
+                            <select class="form-select" name="date_column">
+                                <option value="">Otomatik Tespit</option>
+                                <option value="tarih">Tarih</option>
+                                <option value="date">Date</option>
+                                <option value="ay">Ay</option>
+                                <option value="month">Month</option>
+                            </select>
+                            <small class="text-muted">Hangi sütunun tarih bilgisi içerdiğini belirtin</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Satış Sütunu</label>
+                            <select class="form-select" name="sales_column">
+                                <option value="">Otomatik Tespit</option>
+                                <option value="satis">Satış</option>
+                                <option value="sales">Sales</option>
+                                <option value="miktar">Miktar</option>
+                                <option value="amount">Amount</option>
+                            </select>
+                            <small class="text-muted">Hangi sütunun satış verisi içerdiğini belirtin</small>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link text-decoration-none p-0" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                    <i class="fas fa-cog me-2"></i>Gelişmiş Seçenekler
+                                    <i class="fas fa-chevron-down ms-2"></i>
+                                </button>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="advancedOptions">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Başlık Satırı</label>
+                                        <input type="number" class="form-control" name="header_row" value="0" min="0">
+                                        <small class="text-muted">Sütun başlıklarının bulunduğu satır (0 = ilk satır)</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Sayfa/Sheet</label>
+                                        <input type="text" class="form-control" name="sheet_name" placeholder="Sheet1">
+                                        <small class="text-muted">Excel dosyasındaki sayfa adı (boş = ilk sayfa)</small>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remove_outliers" id="removeOutliers">
+                                            <label class="form-check-label" for="removeOutliers">
+                                                Aykırı değerleri otomatik temizle
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn" disabled>
+                            <i class="fas fa-play me-2"></i>Analizi Başlat
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="card mt-4 border-0 bg-light">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-question-circle me-2"></i>Yardım ve İpuçları
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Excel dosyanızda tarih ve satış sütunları bulunmalı
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                En az 12 aylık veri önerilir
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Dosya boyutu 16MB'ı geçmemeli
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Veriler sayısal formatta olmalı
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+                <h5>Dosya İşleniyor...</h5>
+                <p class="text-muted mb-0">Verileriniz analiz ediliyor ve model eğitiliyor. Bu işlem birkaç dakika sürebilir.</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 45%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadForm = document.getElementById('uploadForm');
+
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', handleFileSelect);
+
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (fileInput.files.length > 0) {
+            // Dosya validasyonu
+            const file = fileInput.files[0];
+            if (!validateFile(file)) {
+                return;
+            }
+            
+            // Show loading modal
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            loadingModal.show();
+            
+            // Form data hazırla
+            const formData = new FormData(uploadForm);
+            
+            // Progress bar güncelleme
+            let progress = 0;
+            const progressBar = document.querySelector('.progress-bar');
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 500);
+            
+            // AJAX ile dosya gönder
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Dosya yükleme hatası: ' + response.status);
+                }
+            })
+            .then(data => {
+                setTimeout(() => {
+                    loadingModal.hide();
+                    if (data.success) {
+                        Utils.showToast('Dosya başarıyla işlendi!', 'success');
+                        window.location.href = '/results';
+                    } else {
+                        Utils.showToast('Hata: ' + data.message, 'danger');
+                    }
+                }, 1000);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                loadingModal.hide();
+                console.error('Upload error:', error);
+                Utils.showToast('Dosya yüklenirken hata oluştu: ' + error.message, 'danger');
+            });
+        }
+    });
+    
+    function validateFile(file) {
+        // Dosya tipi kontrolü
+        const allowedTypes = ['xlsx', 'xls', 'csv'];
+        const extension = file.name.split('.').pop().toLowerCase();
+        if (!allowedTypes.includes(extension)) {
+            Utils.showToast('Geçersiz dosya türü. Lütfen XLSX, XLS veya CSV dosyası seçin.', 'danger');
+            return false;
+        }
+        
+        // Dosya boyutu kontrolü (16MB)
+        const maxSize = 16 * 1024 * 1024;
+        if (file.size > maxSize) {
+            Utils.showToast('Dosya boyutu çok büyük. Maksimum 16MB dosya yükleyebilirsiniz.', 'danger');
+            return false;
+        }
+        
+        return true;
+    }
+
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.remove('d-none');
+            uploadArea.classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    window.clearFile = function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        uploadArea.classList.remove('d-none');
+        submitBtn.disabled = true;
+    }
+});
+</script>
+{% endblock %}

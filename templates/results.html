@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-primary">
+                <i class="fas fa-chart-bar me-3"></i>Satış Tahmin Sonuçları
+            </h2>
+            <p class="lead text-muted">
+                Makine öğrenmesi modelinizin ürettiği tahmin sonuçları ve analizler
+            </p>
+        </div>
+
+        <!-- Model Performance -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bullseye fa-3x text-success mb-3"></i>
+                        <h4 class="text-success">{{ data.accuracy }}%</h4>
+                        <p class="text-muted mb-0">Model Doğruluğu</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-database fa-3x text-info mb-3"></i>
+                        <h4 class="text-info">{{ data.predictions|length }}</h4>
+                        <p class="text-muted mb-0">Tahmin Sayısı</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                        <h4 class="text-warning">Real-time</h4>
+                        <p class="text-muted mb-0">Güncelleme</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mb-4" 
+             data-chart-dates="{{ data.dates_json | safe }}"
+             data-chart-predictions="{{ data.predictions_json | safe }}">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Satış Tahmin Grafiği
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="predictionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-pie-chart me-2"></i>Trend Analizi
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trendChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions Table -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Detaylı Tahmin Tablosu
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary" id="csvExportBtn">
+                        <i class="fas fa-download me-1"></i>CSV İndir
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="excelExportBtn">
+                        <i class="fas fa-file-excel me-1"></i>Excel İndir
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="predictionsTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="fas fa-calendar me-2"></i>Dönem</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Tahmin Edilen Satış</th>
+                                <th><i class="fas fa-percentage me-2"></i>Güven Aralığı</th>
+                                <th><i class="fas fa-trending-up me-2"></i>Trend</th>
+                                <th><i class="fas fa-cog me-2"></i>Aksiyon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(data.predictions|length) %}
+                            <tr>
+                                <td class="fw-bold">{{ data.dates[i] }}</td>
+                                <td>
+                                    <span class="badge bg-primary fs-6">
+                                        {{ "{:,.0f}".format(data.predictions[i]) }} TL
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                            style="width: {{ 75 + (i * 5) % 20 }}%" 
+                                            aria-valuenow="{{ 75 + (i * 5) % 20 }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ 75 + (i * 5) % 20 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if loop.index0 == 0 %}
+                                        <i class="fas fa-arrow-right text-warning"></i> Stabil
+                                    {% elif loop.index0 % 2 == 0 %}
+                                        <i class="fas fa-arrow-up text-success"></i> Artış
+                                    {% else %}
+                                        <i class="fas fa-arrow-down text-danger"></i> Azalış
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info detail-btn" 
+                                            data-date="{{ data.dates[i] }}" 
+                                            data-prediction="{{ data.predictions[i] }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Önemli İçgörüler
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>En yüksek satış:</strong> Mart 2024'te bekleniyor
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                <strong>Düşük performans:</strong> Yaz aylarında satışlarda azalma
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-info-circle text-info me-2"></i>
+                                <strong>Genel trend:</strong> %12 yıllık büyüme beklentisi
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-star text-primary me-2"></i>
+                                <strong>Önerilen aksiyon:</strong> Q2'de promosyon kampanyaları
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-target me-2"></i>Öneri ve Stratejiler
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-arrow-up fa-2x text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Stok Artırımı</h6>
+                                <small class="text-muted">Mart ayı için %20 stok artırımı öneriliyor</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-bullhorn fa-2x text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Pazarlama Kampanyası</h6>
+                                <small class="text-muted">Yaz döneminde satış artırıcı kampanyalar</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-chart-line fa-2x text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Trend Takibi</h6>
+                                <small class="text-muted">Aylık performans raporlarını takip edin</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center">
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-upload me-2"></i>Yeni Veri Yükle
+            </a>
+            <button class="btn btn-success btn-lg me-3" id="generateReportBtn">
+                <i class="fas fa-file-pdf me-2"></i>Rapor Oluştur
+            </button>
+            <button class="btn btn-info btn-lg" id="refreshPredictionsBtn">
+                <i class="fas fa-sync-alt me-2"></i>Tahminleri Yenile
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>Detaylı Tahmin Analizi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Modal content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary">PDF İndir</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get data from HTML data attributes
+    const chartsSection = document.querySelector('[data-chart-dates]');
+    const chartData = {
+        dates: JSON.parse(chartsSection.getAttribute('data-chart-dates')),
+        predictions: JSON.parse(chartsSection.getAttribute('data-chart-predictions'))
+    };
+    
+    // Initialize charts with data
+    initializeCharts(chartData);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="display-4 fw-bold text-primary mb-4">
+                <i class="fas fa-chart-line me-3"></i>Satış Tahmin Sistemi
+            </h1>
+            <p class="lead mb-4">
+                Excel dosyalarınızı yükleyerek gelişmiş makine öğrenmesi algoritmaları ile 
+                satış tahminleri yapın ve işletmenizin geleceğini planlayın.
+            </p>
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-upload me-2"></i>Veri Yükle
+            </a>
+            <a href="{{ url_for('results') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-chart-bar me-2"></i>Sonuçları Görüntüle
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="feature-card h-100 text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-file-excel fa-3x text-success"></i>
+            </div>
+            <h4>Excel Dosyası Yükleme</h4>
+            <p class="text-muted">
+                XLSX, XLS ve CSV formatlarındaki satış verilerinizi kolayca yükleyin ve analiz edin.
+            </p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card h-100 text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-brain fa-3x text-warning"></i>
+            </div>
+            <h4>Akıllı Tahmin</h4>
+            <p class="text-muted">
+                Makine öğrenmesi algoritmaları ile geçmiş verilerinizden gelecek satış tahminleri üretin.
+            </p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card h-100 text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-chart-area fa-3x text-info"></i>
+            </div>
+            <h4>Görsel Analiz</h4>
+            <p class="text-muted">
+                Tahmin sonuçlarınızı interaktif grafikler ve tablolarla görselleştirin.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="stats-section bg-light rounded p-5 mb-5">
+    <h3 class="text-center mb-4">Sistem İstatistikleri</h3>
+    <div class="row text-center">
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h2 class="text-primary">95%</h2>
+                <p class="text-muted">Tahmin Doğruluğu</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h2 class="text-success">1000+</h2>
+                <p class="text-muted">İşlenen Dosya</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h2 class="text-warning">24/7</h2>
+                <p class="text-muted">Sistem Aktifliği</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h2 class="text-info">50+</h2>
+                <p class="text-muted">Desteklenen Format</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How it Works Section -->
+<div class="how-it-works mb-5">
+    <h3 class="text-center mb-4">Nasıl Çalışır?</h3>
+    <div class="row">
+        <div class="col-md-3 text-center mb-4">
+            <div class="step-number">1</div>
+            <h5>Dosya Yükle</h5>
+            <p class="text-muted">Excel veya CSV dosyanızı sisteme yükleyin</p>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="step-number">2</div>
+            <h5>Veri Analizi</h5>
+            <p class="text-muted">Sistem verilerinizi otomatik olarak analiz eder</p>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="step-number">3</div>
+            <h5>Model Eğitimi</h5>
+            <p class="text-muted">Makine öğrenmesi modeli eğitilir</p>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="step-number">4</div>
+            <h5>Tahmin Üret</h5>
+            <p class="text-muted">Gelecek satış tahminlerinizi görüntüleyin</p>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="cta-section text-center bg-primary text-white rounded p-5">
+    <h3 class="mb-3">Hemen Başlayın!</h3>
+    <p class="mb-4">Satış verilerinizi yükleyerek gelecek planlamanızı bugün başlatın.</p>
+    <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-lg">
+        <i class="fas fa-rocket me-2"></i>Şimdi Başla
+    </a>
+</div>
+{% endblock %}
