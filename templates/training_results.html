@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Eğitim Sonuçları - Satış Tahmin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            
+            <!-- Başarı Mesajı -->
+            <div class="alert alert-success alert-dismissible fade show">
+                <h4 class="alert-heading">
+                    <i class="fas fa-check-circle"></i> Model Başarıyla Eğitildi!
+                </h4>
+                <p>{{ model_info.model_type }} modeli {{ model_info.filename }} verisi ile eğitildi.</p>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- Model Bilgileri -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-info-circle"></i>
+                                Model Bilgileri
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Model Türü:</strong></td>
+                                    <td>{{ model_info.model_type.replace('_', ' ').title() }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Veri Dosyası:</strong></td>
+                                    <td>{{ model_info.filename }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hedef Kolon:</strong></td>
+                                    <td><span class="badge badge-primary">{{ model_info.target_column }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Özellik Sayısı:</strong></td>
+                                    <td>{{ model_info.feature_columns|length }} kolon</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Test Veri Oranı:</strong></td>
+                                    <td>%{{ (model_info.test_size * 100)|int }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Eksik Veri İşleme:</strong></td>
+                                    <td>{{ model_info.handle_missing.title() }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Eğitim Tarihi:</strong></td>
+                                    <td>{{ model_info.trained_at }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performans Metrikleri -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                Performans Metrikleri
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="performance-metrics">
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Doğruluk (Accuracy)</span>
+                                        <span class="badge badge-success">%{{ performance.accuracy }}</span>
+                                    </div>
+                                    <div class="progress mt-1">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ performance.accuracy }}%" aria-valuenow="{{ performance.accuracy }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>R² Score</span>
+                                        <span class="badge badge-info">{{ performance.r2_score }}</span>
+                                    </div>
+                                    <div class="progress mt-1">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ (performance.r2_score * 100)|int }}%" aria-valuenow="{{ (performance.r2_score * 100)|int }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>MSE (Mean Squared Error)</span>
+                                        <span class="badge badge-warning">{{ performance.mse }}</span>
+                                    </div>
+                                    <small class="text-muted">Düşük değer daha iyidir</small>
+                                </div>
+                            </div>
+
+                            <!-- Performans Yorumu -->
+                            <div class="mt-3 p-3 bg-light rounded">
+                                {% if performance.accuracy >= 90 %}
+                                <div class="text-success">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <strong>Mükemmel!</strong> Model çok iyi performans gösteriyor.
+                                </div>
+                                {% elif performance.accuracy >= 80 %}
+                                <div class="text-info">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <strong>İyi!</strong> Model kabul edilebilir performans gösteriyor.
+                                </div>
+                                {% elif performance.accuracy >= 70 %}
+                                <div class="text-warning">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <strong>Orta!</strong> Model geliştirilmeye ihtiyaç duyuyor.
+                                </div>
+                                {% else %}
+                                <div class="text-danger">
+                                    <i class="fas fa-times-circle"></i>
+                                    <strong>Zayıf!</strong> Farklı bir model veya daha fazla veri deneyin.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kullanılan Özellikler -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-list"></i>
+                                Kullanılan Özellikler
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for feature in model_info.feature_columns %}
+                            <span class="badge badge-secondary mr-2 mb-2">{{ feature }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aksiyon Butonları -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <div>
+                            <a href="{{ url_for('upload.upload_file') }}" class="btn btn-outline-secondary mb-2">
+                                <i class="fas fa-upload"></i> Yeni Veri Yükle
+                            </a>
+                            <a href="{{ url_for('results.results') }}" class="btn btn-outline-info mb-2">
+                                <i class="fas fa-list"></i> Tüm Sonuçları Gör
+                            </a>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('results.make_prediction') }}" class="btn btn-success btn-lg mb-2">
+                                <i class="fas fa-magic"></i> Tahmin Yap
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.performance-metrics .progress {
+    height: 8px;
+}
+
+.metric-item {
+    padding: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    background: #f8f9fa;
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 5px 10px;
+}
+</style>
+{% endblock %}

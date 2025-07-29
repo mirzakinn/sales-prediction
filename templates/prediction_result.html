@@ -1,33 +1,67 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <!-- Page Header -->
-        <div class="text-center mb-5">
-            <h2 class="fw-bold" style="color: #ff0000;">
-                <i class="fas fa-check-circle me-3"></i>Tahmin Sonucu
-            </h2>
-            <p class="lead text-muted">
-                Modelinizin tahmin sonucu hazır!
-            </p>
-        </div>
+{% block title %}Tahmin Sonucu - Satış Tahmin{% endblock %}
 
-        <!-- Tahmin Sonucu Kartı -->
-        <div class="card shadow-lg border-0 mb-4">
-            <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);">
-                <h3 class="mb-0">
-                    <i class="fas fa-trophy me-2"></i>Tahmin: {{ "%.2f"|format(prediction) }}
-                </h3>
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            
+            <!-- Başarı Mesajı -->
+            <div class="alert alert-success alert-dismissible fade show">
+                <h4 class="alert-heading">
+                    <i class="fas fa-check-circle"></i> Tahmin Tamamlandı!
+                </h4>
+                <p>Modeliniz {{ model_info.model_type.replace('_', ' ').title() }} başarıyla tahmin gerçekleştirdi.</p>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <div class="card-body p-5 text-center">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="bg-light p-4 rounded">
-                            <h5 class="text-primary">Girilen Değerler</h5>
-                            <hr>
-                            <p class="mb-2"><strong>Özellik 1:</strong> {{ feature1 }}</p>
-                            <p class="mb-0"><strong>Özellik 2:</strong> {{ feature2 }}</p>
+
+            <div class="row">
+                <!-- Tahmin Sonucu -->
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-bullseye"></i>
+                                Tahmin Sonucu
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="display-4 text-success font-weight-bold mb-3">
+                                {{ prediction }}
+                            </div>
+                            <p class="lead">{{ model_info.target_column.replace('_', ' ').title() }}</p>
+                            <small class="text-muted">
+                                Model Doğruluğu: %{{ model_info.performance.accuracy }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Girilen Değerler -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-keyboard"></i>
+                                Girilen Değerler
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                {% for feature, value in input_data.items() %}
+                                <tr>
+                                    <td><strong>{{ feature.replace('_', ' ').title() }}:</strong></td>
+                                    <td>{{ value }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -40,42 +74,72 @@
                     </div>
                 </div>
 
-                <!-- Uyarı -->
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Not:</strong> Bu örnek bir hesaplamadır. 
-                    Gerçek model kodunuzu yazdıktan sonra doğru tahminler alacaksınız.
+            <!-- Model Bilgileri -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                Model Detayları
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Model Türü:</strong><br>
+                                    {{ model_info.model_type.replace('_', ' ').title() }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Veri Dosyası:</strong><br>
+                                    {{ model_info.filename }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Eğitim Tarihi:</strong><br>
+                                    {{ model_info.trained_at }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Özellik Sayısı:</strong><br>
+                                    {{ model_info.feature_columns|length }} kolon
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Aksiyonlar -->
-                <div class="mt-4">
-                    <a href="{{ url_for('results.make_prediction') }}" class="btn btn-primary btn-lg me-3">
-                        <i class="fas fa-redo me-2"></i>Yeni Tahmin
-                    </a>
-                    <a href="{{ url_for('results.results') }}" class="btn btn-outline-success btn-lg">
-                        <i class="fas fa-chart-line me-2"></i>Tüm Sonuçlar
-                    </a>
+            <!-- Aksiyon Butonları -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <div>
+                            <a href="{{ url_for('results.make_prediction') }}" class="btn btn-outline-primary mb-2">
+                                <i class="fas fa-redo"></i> Yeni Tahmin
+                            </a>
+                            <a href="{{ url_for('results.results') }}" class="btn btn-outline-info mb-2">
+                                <i class="fas fa-list"></i> Sonuçları Gör
+                            </a>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('upload.upload_file') }}" class="btn btn-success mb-2">
+                                <i class="fas fa-upload"></i> Yeni Veri Yükle
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- TODO Kart -->
-        <div class="card border-info">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-code me-2"></i>Geliştirme Notları
-                </h5>
+            <!-- Uyarı -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Not:</strong> Bu örnek bir hesaplamadır. 
+                        Gerçek model kodunuzu yazdıktan sonra doğru tahminler alacaksınız.
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <h6>Bu sayfayı geliştirmek için:</h6>
-                <ul class="mb-0">
-                    <li>Modelin güven aralığını gösterin</li>
-                    <li>Tahmin gerekçelerini açıklayın</li>
-                    <li>Benzer geçmiş verilerle karşılaştırın</li>
-                    <li>Grafik ve görselleştirmeler ekleyin</li>
-                    <li>Sonucu kaydetme seçeneği ekleyin</li>
-                </ul>
-            </div>
+
         </div>
     </div>
 </div>

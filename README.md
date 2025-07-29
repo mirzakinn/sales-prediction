@@ -1,167 +1,152 @@
-# Satış Tahmin Sistemi - Basit Web Uygulaması
+# Satış Tahmin Sistemi
 
-Bu proje, Excel dosyalarından satış verilerini okuyarak makine öğrenmesi ile gelecek satış tahminleri yapacak bir web uygulamasının **Flask web framework** kısmıdır. **API kullanılmaz**, sadece geleneksel web sayfaları ve formlar kullanılır. ML kısımları sizin öğrenmeniz ve uygulamanız için boş bırakılmıştır.
+Bu proje, kullanıcıların CSV/Excel dosyalarını yükleyerek makine öğrenmesi modelleri ile satış tahminleri yapabilecekleri web tabanlı bir uygulamadır. Flask framework'ü kullanılarak geliştirilmiş, Blueprint mimarisi ile modüler yapıda tasarlanmıştır.
 
-## 🎯 Proje Amacı
+## ✨ Özellikler
 
-- **Flask Blueprint mimarisi** öğrenme
-- **Basit web uygulaması** geliştirme  
-- **Form işlemleri** ve sayfa geçişleri
-- **Dosya yükleme** işlemleri
-- **HTML template'leri** kullanımı
+- **Dosya Yükleme**: CSV, XLS, XLSX formatlarını destekler
+- **Kolon Seçimi**: Kullanıcı hedef ve özellik kolonlarını seçebilir
+- **Model Yapılandırması**: Farklı ML algoritmaları arasından seçim
+- **Model Eğitimi**: Otomatik model eğitimi ve performans değerlendirmesi
+- **Tahmin Yapma**: Eğitilen model ile yeni veriler için tahmin
+- **Responsive UI**: Modern ve kullanıcı dostu arayüz
+- **Session Yönetimi**: Kullanıcı işlemlerini takip eden workflow
 
-## 🏗️ Proje Yapısı
+## 🏗️ Teknik Mimari
 
 ```
 sales-prediction/
 │
-├── app.py                 # Ana uygulama dosyası (Factory Pattern)
-├── config.py             # Uygulama yapılandırmaları
-├── requirements.txt      # Temel Python bağımlılıkları
-├── README.md            # Proje dokümantasyonu
+├── app.py                 # Ana Flask uygulaması
+├── config.py             # Uygulama konfigürasyonu
+├── requirements.txt      # Python bağımlılıkları
 │
-├── blueprints/          # Flask Blueprint'leri
-│   ├── __init__.py
-│   ├── main.py         # Ana sayfa rotaları
-│   ├── upload.py       # Dosya yükleme rotaları
-│   └── results.py      # ML işlemleri (TODO: ML kodları)
+├── blueprints/          # Modüler Blueprint yapısı
+│   ├── main.py         # Ana sayfa routes
+│   ├── upload.py       # Dosya yükleme işlemleri
+│   └── results.py      # ML workflow ve sonuçlar
 │
 ├── utils/               # Yardımcı fonksiyonlar
-│   ├── __init__.py
 │   ├── file_utils.py   # Dosya işlemleri
-│   └── data_utils.py   # Veri analizi (TODO: ML kodları)
+│   └── data_utils.py   # Veri analizi fonksiyonları
 │
-├── static/              # Statik dosyalar (CSS, JS)
-│   ├── css/
-│   └── js/
+├── static/              # CSS, JavaScript, images
+│   ├── css/style.css
+│   ├── js/main.js
+│   └── images/
 │
 ├── templates/           # HTML şablonları
-│   ├── base.html               # Ana template
+│   ├── base.html               # Ana layout
 │   ├── index.html              # Ana sayfa
 │   ├── upload.html             # Dosya yükleme
-│   ├── train_model.html        # Model eğitimi formu
-│   ├── make_prediction.html    # Tahmin formu
-│   ├── prediction_result.html  # Tahmin sonucu
-│   └── results.html            # Genel sonuçlar
+│   ├── select_columns.html     # Kolon seçimi
+│   ├── configure_model.html    # Model konfigürasyonu
+│   ├── train_model.html        # Model eğitimi
+│   ├── make_prediction.html    # Tahmin yapma
+│   └── prediction_result.html  # Sonuçlar
 │
 └── uploads/             # Yüklenen dosyalar
 ```
 
 ## 🚀 Kurulum ve Çalıştırma
 
-1. Python virtual environment oluşturun:
+### Gereksinimler
+- Python 3.8+
+- Flask
+- Pandas
+- Scikit-learn
+- Bootstrap 5
+
+### Kurulum
+1. Projeyi klonlayın:
+```bash
+git clone https://github.com/mirzakinn/sales-prediction.git
+cd sales-prediction
+```
+
+2. Virtual environment oluşturun:
 ```bash
 python -m venv venv
 venv\Scripts\activate  # Windows
 source venv/bin/activate  # Linux/macOS
 ```
 
-2. Temel paketleri yükleyin:
+3. Bağımlılıkları yükleyin:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. ML kütüphanelerinizi ekleyin:
+4. Uygulamayı çalıştırın:
 ```bash
-# Örnek: Kendi kullanacağınız kütüphaneleri yükleyin
-pip install numpy scikit-learn matplotlib seaborn
+python app.py
 ```
 
-## 📋 Tamamlanmış Kısımlar (Web Framework)
+5. Tarayıcıda açın: `http://127.0.0.1:5000`
 
-✅ **Ana Sayfa**: Güzel giriş sayfası  
-✅ **Dosya Yükleme**: CSV, XLS, XLSX dosya desteği  
-✅ **Model Eğitimi Formu**: Dosya seçimi ve model türü seçimi  
-✅ **Tahmin Formu**: Özellik değerleri girme  
-✅ **Sonuç Sayfaları**: Tahmin sonuçlarını gösterme  
-✅ **Navigation**: Dropdown menü ile sayfa geçişleri  
-✅ **Flash Messages**: Kullanıcı geri bildirimi  
-✅ **Blueprint Mimarisi**: Modüler yapı  
+## � Kullanım Workflow'u
 
-## 🔨 Sizin Yapacağınız Kısımlar (ML/AI)
+1. **Ana Sayfa**: Proje tanıtımı ve mevcut workflow durumu
+2. **Dosya Yükleme**: CSV/Excel dosyasını sisteme yükleyin
+3. **Kolon Seçimi**: Hedef kolon ve özellik kolonlarını seçin
+4. **Model Konfigürasyonu**: ML algoritmasını ve parametreleri seçin
+5. **Model Eğitimi**: Sistem modeli otomatik olarak eğitir
+6. **Tahmin Yapma**: Yeni verilerle tahmin yapın
+7. **Sonuçlar**: Tahmin sonuçlarını ve model performansını görüntüleyin
 
-### 1. Veri Analizi (`utils/data_utils.py`)
-- [ ] `analyze_dataframe()` fonksiyonunu geliştirin
-- [ ] Eksik veri analizi ekleyin
-- [ ] Veri tipi kontrolü yapın  
-- [ ] İstatistiksel özetler çıkarın
-- [ ] Korelasyon analizi yapın
-- [ ] Outlier tespiti ekleyin
+## 🛠️ Teknik Detaylar
 
-### 2. Model Eğitimi (`blueprints/results.py` - `train_model()` fonksiyonu)
-- [ ] Pandas ile veri okumayı implement edin
-- [ ] Veri hazırlama kodları yazın
-- [ ] Sklearn modellerini entegre edin:
-  - [ ] Linear Regression
-  - [ ] Decision Tree  
-  - [ ] Random Forest
-- [ ] Model performans metriklerini hesaplayın
-- [ ] Eğitilen modeli kaydedin (pickle/joblib ile)
+### Backend (Flask)
+- **Blueprint Architecture**: Modüler route yönetimi
+- **Session Management**: Kullanıcı workflow'u takibi
+- **File Upload**: Çoklu format desteği (CSV, XLS, XLSX)
+- **Error Handling**: Kapsamlı hata yönetimi ve kullanıcı bildirimleri
 
-### 3. Tahmin Yapma (`blueprints/results.py` - `make_prediction()` fonksiyonu)  
-- [ ] Kaydedilmiş modeli yükleyin
-- [ ] Form verilerini model formatına çevirin
-- [ ] Tahmin yapın ve sonucu döndürün
-- [ ] Hata durumlarını ele alın
+### Frontend (Bootstrap 5)
+- **Responsive Design**: Tüm cihazlarda uyumlu
+- **Interactive Forms**: Dinamik form validasyonu
+- **Progress Tracking**: Workflow durumu görselleştirmesi
+- **Modern UI**: Soft red color scheme ile modern tasarım
 
-### 4. Form Alanlarını Özelleştirin
-- [ ] `templates/make_prediction.html` - gerçek özellik alanları
-- [ ] `templates/train_model.html` - model seçenekleri
-- [ ] Veri setinize uygun input alanları
+### Data Processing
+- **Multi-encoding Support**: UTF-8, Latin-1, CP1252 desteği
+- **Automatic Separator Detection**: Farklı CSV formatları
+- **Data Validation**: Dosya formatı ve içerik kontrolü
+- **Session Persistence**: Kullanıcı seçimlerini saklama
 
-### 5. Sonuç Görselleştirme  
-- [ ] `templates/results.html` - grafik ve chartlar
-- [ ] Model performans göstergeleri
-- [ ] Tahmin doğruluğu metrikleri
+## 📊 Desteklenen Dosya Formatları
 
-## 🌐 Sayfa Yapısı (API YOK!)
+- **CSV**: Virgül, noktalı virgül, tab ayırıcılı
+- **Excel**: .xlsx, .xls formatları
+- **Encoding**: UTF-8, Latin-1, CP1252, ISO-8859-1
 
-### Ana Akış
-1. **Ana Sayfa** (`/`) → Genel tanıtım
-2. **Veri Yükleme** (`/upload`) → CSV/Excel dosyası yükle
-3. **Model Eğitimi** (`/train-model`) → Form ile model eğit
-4. **Tahmin Yapma** (`/make-prediction`) → Form ile tahmin
-5. **Sonuçlar** (`/results`) → Genel sonuçlar
+## 🔧 Konfigürasyon
 
-### Form İşlemleri
-- **POST** `/train-model` → Model eğitimi başlat
-- **POST** `/make-prediction` → Tahmin yap
-- **POST** `/upload` → Dosya yükle
+`config.py` dosyasında aşağıdaki ayarları değiştirebilirsiniz:
+- Upload klasörü yolu
+- Maksimum dosya boyutu
+- Desteklenen dosya türleri
+- Debug modu
 
-**Tüm işlemler normal HTML formları ile yapılır, JSON API yok!**
+## 📱 API Endpoints
 
-## 🎓 Öğrenme Adımları
+| Route | Method | Açıklama |
+|-------|--------|----------|
+| `/` | GET | Ana sayfa |
+| `/upload` | GET/POST | Dosya yükleme |
+| `/select-columns/<filename>` | GET | Kolon seçimi |
+| `/configure-model` | POST | Model konfigürasyonu |
+| `/train-model` | POST | Model eğitimi |
+| `/make-prediction` | GET/POST | Tahmin yapma |
+| `/results` | GET | Sonuçlar |
+| `/clear-session` | GET | Session temizleme |
 
-### 1. Temel Seviye (Hafta 1-2)
-1. Pandas ile CSV okuma: `pd.read_csv()`
-2. Temel veri analizi: `.head()`, `.info()`, `.describe()`  
-3. Linear Regression: `from sklearn.linear_model import LinearRegression`
+## 🎨 UI Bileşenleri
 
-### 2. Orta Seviye (Hafta 3-4)
-1. Veri temizleme: eksik değerler, outlier'lar
-2. Feature engineering: yeni özellik oluşturma
-3. Model comparison: Linear vs Decision Tree vs Random Forest
-
-### 3. İleri Seviye (Hafta 5+)
-1. Cross-validation ile model değerlendirme
-2. Hyperparameter tuning
-3. Model persistence: pickle/joblib ile kaydetme
-
-## 💡 İpuçları
-
-1. **Küçük adımlarla başlayın**: Önce sadece CSV okumayı çalıştırın
-2. **Print ile debug edin**: `print(df.head())` ile veriyi kontrol edin  
-3. **Form verilerini kontrol edin**: `print(request.form)` ile ne geldiğini görün
-4. **Hata mesajlarını okuyun**: Flask debug modu size yardımcı olur
-5. **Dokümante edin**: Kodlarınıza yorum ekleyin
-
-## 📚 Faydalı Kaynaklar
-
-- **Pandas**: https://pandas.pydata.org/docs/
-- **Scikit-learn**: https://scikit-learn.org/stable/
-- **Flask Forms**: https://flask.palletsprojects.com/en/2.3.x/patterns/wtforms/
-- **Bootstrap**: https://getbootstrap.com/docs/
-
-**İyi öğrenmeler! 🚀📊**
+- **Navigation**: Dropdown menü ile sayfa geçişleri
+- **File Upload**: Drag&drop destekli dosya yükleme
+- **Progress Tracker**: Workflow durumu göstergesi
+- **Flash Messages**: Kullanıcı geri bildirimleri
+- **Responsive Tables**: Veri önizleme tabloları
+- **Loading Modals**: İşlem durumu göstergeleri
 
 

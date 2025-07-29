@@ -40,10 +40,25 @@
                             ML İşlemleri
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('results.train_model') }}">Model Eğit</a></li>
+                            {% if session.get('current_file') %}
+                            <li><a class="dropdown-item" href="{{ url_for('results.select_columns', filename=session.get('current_file')) }}">Kolon Seç</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item disabled" href="#" title="Önce veri yükleyin">Kolon Seç</a></li>
+                            {% endif %}
+                            
+                            {% if session.get('trained_model') %}
                             <li><a class="dropdown-item" href="{{ url_for('results.make_prediction') }}">Tahmin Yap</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item disabled" href="#" title="Önce model eğitin">Tahmin Yap</a></li>
+                            {% endif %}
+                            
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('results.results') }}">Sonuçları Gör</a></li>
+                            
+                            {% if session.get('current_file') or session.get('trained_model') %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('results.clear_session') }}">Oturumu Temizle</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>

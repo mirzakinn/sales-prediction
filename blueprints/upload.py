@@ -1,7 +1,7 @@
 """
-Dosya yükleme Blueprint'i
+Dosya yükleme Blueprint'i - Yeni Workflow
 """
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
@@ -12,28 +12,29 @@ upload_bp = Blueprint('upload', __name__)
 
 @upload_bp.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    """Dosya yükleme endpoint'i"""
+    """Dosya yükleme endpoint'i - yeni workflow için güncellenmiş"""
     if request.method == 'POST':
         try:
             # Dosya kontrolü
             if 'file' not in request.files:
-                return jsonify({
-                    'success': False,
-                    'message': 'Dosya seçilmedi'
-                }), 400
+                flash('Dosya seçilmedi!', 'error')
+                return redirect(url_for('upload.upload_file'))
                 
             file = request.files['file']
             
             # Dosya boş mu kontrolü
             if file.filename == '':
-                return jsonify({
-                    'success': False,
-                    'message': 'Dosya seçilmedi'
-                }), 400
+                flash('Dosya seçilmedi!', 'error')
+                return redirect(url_for('upload.upload_file'))
             
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 upload_folder = 'uploads'
+                
+                # Upload klasörü yoksa oluştur
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder)
+                
                 filepath = os.path.join(upload_folder, filename)
                 file.save(filepath)
                 
@@ -44,31 +45,20 @@ def upload_file():
                     # Veri analizi
                     analyze_dataframe(df, filename)
                     
-                    # Başarılı response döndür
-                    return jsonify({
-                        'success': True,
-                        'message': 'Dosya başarıyla yüklendi ve işlendi',
-                        'filename': filename,
-                        'rows': df.shape[0],
-                        'columns': df.shape[1]
-                    })
+                    # Başarılı yükleme sonrası kolon seçimine yönlendir
+                    flash(f'Dosya başarıyla yüklendi! ({df.shape[0]} satır, {df.shape[1]} kolon)', 'success')
+                    return redirect(url_for('results.select_columns', filename=filename))
                     
                 except Exception as read_error:
-                    return jsonify({
-                        'success': False,
-                        'message': f'Dosya okuma hatası: {str(read_error)}'
-                    }), 500
+                    flash(f'Dosya okuma hatası: {str(read_error)}', 'error')
+                    return redirect(url_for('upload.upload_file'))
             else:
-                return jsonify({
-                    'success': False,
-                    'message': 'Geçersiz dosya türü. Sadece XLSX, XLS, CSV dosyaları desteklenir.'
-                }), 400
+                flash('Geçersiz dosya türü. Sadece XLSX, XLS, CSV dosyaları desteklenir.', 'error')
+                return redirect(url_for('upload.upload_file'))
                 
         except Exception as e:
             print(f"Upload hatası: {str(e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Dosya yükleme hatası: {str(e)}'
-            }), 500
+            flash(f'Dosya yükleme hatası: {str(e)}', 'error')
+            return redirect(url_for('upload.upload_file'))
     
     return render_template('upload.html')

@@ -13,19 +13,94 @@
                 satış tahminleri yapın ve işletmenizin geleceğini planlayın.
             </p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
+                <!-- 1. Veri Yükle - Her zaman aktif -->
                 <a href="{{ url_for('upload.upload_file') }}" class="btn btn-outline-primary btn-lg text-danger border-2 fw-bold" style="background-color: #f8f9fa;">
-                    <i class="fas fa-upload me-2"></i>Veri Yükle
+                    <i class="fas fa-upload me-2"></i>1. Veri Yükle
                 </a>
-                <a href="{{ url_for('results.train_model') }}" class="btn btn-success btn-lg">
-                    <i class="fas fa-brain me-2"></i>Model Eğit
+                
+                <!-- 2. Kolon Seç - Veri yüklendiyse aktif -->
+                {% if session.get('current_file') %}
+                <a href="{{ url_for('results.select_columns', filename=session.get('current_file')) }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-columns me-2"></i>2. Kolon Seç
                 </a>
+                {% else %}
+                <a href="#" class="btn btn-outline-secondary btn-lg disabled" title="Önce veri yükleyin">
+                    <i class="fas fa-columns me-2"></i>2. Kolon Seç
+                </a>
+                {% endif %}
+                
+                <!-- 3. Model Eğit - Kolonlar seçildiyse aktif -->
+                {% if session.get('target_column') and session.get('feature_columns') %}
+                <a href="#" onclick="$('#configure-model-form').submit(); return false;" class="btn btn-warning btn-lg">
+                    <i class="fas fa-brain me-2"></i>3. Model Eğit
+                </a>
+                {% else %}
+                <a href="#" class="btn btn-outline-secondary btn-lg disabled" title="Önce kolonları seçin">
+                    <i class="fas fa-brain me-2"></i>3. Model Eğit
+                </a>
+                {% endif %}
+                
+                <!-- 4. Tahmin Yap - Model eğitildiyse aktif -->
+                {% if session.get('trained_model') %}
                 <a href="{{ url_for('results.make_prediction') }}" class="btn btn-info btn-lg">
-                    <i class="fas fa-crystal-ball me-2"></i>Tahmin Yap
+                    <i class="fas fa-crystal-ball me-2"></i>4. Tahmin Yap
                 </a>
+                {% else %}
+                <a href="#" class="btn btn-outline-secondary btn-lg disabled" title="Önce model eğitin">
+                    <i class="fas fa-crystal-ball me-2"></i>4. Tahmin Yap
+                </a>
+                {% endif %}
+                
+                <!-- Sonuçları Gör - Her zaman aktif -->
                 <a href="{{ url_for('results.results') }}" class="btn btn-outline-primary btn-lg text-danger border-3 fw-bold" style="background-color: #f8f9fa;">
                     <i class="fas fa-chart-bar me-2"></i>Sonuçları Gör
                 </a>
             </div>
+            
+            <!-- Gizli form - Model eğitimi için -->
+            {% if session.get('target_column') and session.get('feature_columns') %}
+            <form id="configure-model-form" method="POST" action="{{ url_for('results.configure_model') }}" style="display: none;">
+                <input type="hidden" name="target_column" value="{{ session.get('target_column') }}">
+                {% for feature in session.get('feature_columns', []) %}
+                <input type="hidden" name="feature_columns" value="{{ feature }}">
+                {% endfor %}
+            </form>
+            {% endif %}
+            
+            <!-- Workflow Durumu -->
+            {% if session.get('current_file') or session.get('target_column') or session.get('trained_model') %}
+            <div class="mt-4 p-3 shadow-sm" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 20px;">
+                <h6 class="text-dark"><i class="fas fa-info-circle text-primary"></i> Mevcut İlerleme:</h6>
+                <div class="row text-center">
+                    <div class="col">
+                        {% if session.get('current_file') %}
+                        <i class="fas fa-check text-success"></i> <span style="color: #ff0000; font-weight: 500;">Veri: {{ session.get('current_file') }}</span>
+                        {% else %}
+                        <i class="fas fa-circle text-muted"></i> <span style="color: #ff0000; font-weight: 500;">Veri Yok</span>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        {% if session.get('target_column') %}
+                        <i class="fas fa-check text-success"></i> <span style="color: #ff0000; font-weight: 500;">Hedef: {{ session.get('target_column') }}</span>
+                        {% else %}
+                        <i class="fas fa-circle text-muted"></i> <span style="color: #ff0000; font-weight: 500;">Kolon Seçilmedi</span>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        {% if session.get('trained_model') %}
+                        <i class="fas fa-check text-success"></i> <span style="color: #ff0000; font-weight: 500;">Model: {{ session.get('trained_model').get('model_type', 'Unknown') }}</span>
+                        {% else %}
+                        <i class="fas fa-circle text-muted"></i> <span style="color: #ff0000; font-weight: 500;">Model Yok</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('results.clear_session') }}" class="btn btn-sm shadow-sm" style="background-color: #f8f9fa; color: #ff0000; border: 2px solid #ff0000; border-radius: 15px;">
+                        <i class="fas fa-refresh"></i> Yeniden Başla
+                    </a>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

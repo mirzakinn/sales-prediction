@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Model Konfigürasyonu - Satış Tahmin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cogs"></i>
+                        Model Konfigürasyonu
+                    </h3>
+                    <p class="card-subtitle">Dosya: <strong>{{ filename }}</strong> | Toplam: {{ total_rows }} satır</p>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Seçim Özeti -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-bullseye"></i> Hedef Kolon</h6>
+                                <strong>{{ target_column }}</strong>
+                                {% if missing_data[target_column]['count'] > 0 %}
+                                <br><small class="text-warning">⚠️ {{ missing_data[target_column]['count'] }} eksik veri ({{ missing_data[target_column]['percentage'] }}%)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-list-check"></i> Özellik Kolonları</h6>
+                                {% for feature in feature_columns %}
+                                <span class="badge badge-success mr-1">{{ feature }}</span>
+                                {% if missing_data[feature]['count'] > 0 %}
+                                <small class="text-warning d-block">{{ feature }}: {{ missing_data[feature]['count'] }} eksik ({{ missing_data[feature]['percentage'] }}%)</small>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model Ayarları Formu -->
+                    <form method="POST" action="{{ url_for('results.train_model') }}">
+                        <div class="row">
+                            <!-- Model Türü -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="model_type">
+                                        <i class="fas fa-robot"></i>
+                                        Model Türü
+                                    </label>
+                                    <select name="model_type" id="model_type" class="form-control" required>
+                                        <option value="linear_regression">Linear Regression</option>
+                                        <option value="random_forest">Random Forest</option>
+                                        <option value="xgboost">XGBoost</option>
+                                        <option value="decision_tree">Decision Tree</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Başlangıç için Linear Regression önerilir.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Test Veri Oranı -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="test_size">
+                                        <i class="fas fa-chart-pie"></i>
+                                        Test Veri Oranı
+                                    </label>
+                                    <select name="test_size" id="test_size" class="form-control">
+                                        <option value="0.1">%10 (Daha çok eğitim verisi)</option>
+                                        <option value="0.2" selected>%20 (Önerilen)</option>
+                                        <option value="0.3">%30 (Daha çok test verisi)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Verinin ne kadarı test için ayrılacak.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Eksik Veri İşleme -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="handle_missing">
+                                        <i class="fas fa-question-circle"></i>
+                                        Eksik Veri İşleme
+                                    </label>
+                                    <select name="handle_missing" id="handle_missing" class="form-control">
+                                        <option value="drop">Eksik satırları sil</option>
+                                        <option value="mean">Ortalama ile doldur</option>
+                                        <option value="median">Medyan ile doldur</option>
+                                        <option value="mode">En çok tekrarlanan ile doldur</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Eksik veriler nasıl işlensin?
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Eksik Veri Uyarısı -->
+                        {% set has_missing = false %}
+                        {% for col, data in missing_data.items() %}
+                            {% if data['count'] > 0 %}
+                                {% set has_missing = true %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if has_missing %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Eksik Veri Uyarısı</h6>
+                            <p>Verilerinizde eksik değerler bulundu. Model eğitimi öncesi bu veriler işlenecek:</p>
+                            <ul class="mb-0">
+                                {% for col, data in missing_data.items() %}
+                                {% if data['count'] > 0 %}
+                                <li><strong>{{ col }}</strong>: {{ data['count'] }} eksik veri ({{ data['percentage'] }}%)</li>
+                                {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <!-- Butonlar -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('results.select_columns', filename=filename) }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Geri
+                                    </a>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-play"></i> Modeli Eğit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Model türü hakkında bilgi göster
+document.getElementById('model_type').addEventListener('change', function() {
+    const modelInfo = {
+        'linear_regression': 'Basit ve hızlı. Doğrusal ilişkiler için uygun.',
+        'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
+        'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
+        'decision_tree': 'Anlaşılması kolay ama bazen kararsız.'
+    };
+    
+    const info = modelInfo[this.value];
+    const small = this.parentElement.querySelector('small');
+    small.textContent = info;
+});
+</script>
+{% endblock %}

@@ -1,134 +1,258 @@
 """
-Sonuçlar Blueprint'i - Basit Web Sayfaları Yaklaşımı
-API yok, sadece normal form gönderimi ve sayfa gösterimi
+Sonuçlar Blueprint'i - Kullanıcı Odaklı ML Pipeline
+Veri yükleme → Kolon seçimi → Model eğitimi → Tahmin yapma akışı
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import json
 import os
+import pandas as pd
 
 results_bp = Blueprint('results', __name__)
 
 @results_bp.route('/results')
 def results():
     """
-    Sonuçlar sayfası
-    
-    TODO: Buraya kendi model sonuçlarınızı gösterecek kodu yazın
+    Sonuçlar sayfası - eğitilmiş modellerin listesi
     """
-    # Örnek veri - Kendi model sonuçlarınızla değiştirin
-    sample_data = {
-        'predictions': [100, 150, 200, 120, 180],
-        'dates': ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05'],
-        'accuracy': 85.5,
-        'message': 'Bu veriler örnek verilerdir. Kendi model sonuçlarınızla değiştirin.'
-    }
+    # TODO: Burada gerçek eğitilmiş modelleri veritabanından veya dosyadan alabilirsiniz
+    # Şimdilik örnek veriler gösteriyoruz
+    model_results = [
+        {
+            'model_name': 'Linear Regression',
+            'accuracy': 85.2,
+            'dataset': 'sales_data.csv',
+            'target_column': 'sales',
+            'features': ['price', 'marketing_spend'],
+            'trained_date': '2024-01-15'
+        }
+    ]
     
-    # JSON formatına çevir (frontend grafikler için)
-    sample_data['dates_json'] = json.dumps(sample_data['dates'])
-    sample_data['predictions_json'] = json.dumps(sample_data['predictions'])
-    
-    return render_template('results.html', data=sample_data)
+    return render_template('results.html', results=model_results)
 
-@results_bp.route('/train-model', methods=['GET', 'POST'])
+@results_bp.route('/select-columns/<filename>')
+def select_columns(filename):
+    """
+    Kolon seçimi sayfası - kullanıcı hangi kolonları analiz edeceğini seçer
+    """
+    try:
+        filepath = os.path.join('uploads', filename)
+        if not os.path.exists(filepath):
+            flash('Dosya bulunamadı!', 'error')
+            return redirect(url_for('upload.upload_file'))
+        
+        # CSV dosyasını oku ve kolonları al
+        from utils.data_utils import read_file_by_extension
+        df = read_file_by_extension(filepath, filename)
+        
+        # Boş DataFrame kontrolü
+        if df.empty:
+            flash('Dosya boş veya geçersiz!', 'error')
+            return redirect(url_for('upload.upload_file'))
+        
+        # Kolon adlarını temizle (boşlukları kaldır, özel karakterleri düzelt)
+        df.columns = df.columns.str.strip()
+        columns = df.columns.tolist()
+        
+        # İlk 5 satırı önizleme için al - güvenli şekilde
+        try:
+            preview_data = df.head(5).fillna('').to_dict('records')
+            # Çok uzun değerleri kısalt
+            for row in preview_data:
+                for key, value in row.items():
+                    if isinstance(value, str) and len(str(value)) > 50:
+                        row[key] = str(value)[:50] + "..."
+        except Exception:
+            preview_data = []
+        
+        # Kolon tiplerini belirle - daha güvenli
+        column_types = {}
+        for col in columns:
+            try:
+                dtype = str(df[col].dtype)
+                # Numeric olmaya çalış
+                if 'int' in dtype or 'float' in dtype:
+                    column_types[col] = 'sayısal'
+                else:
+                    # String bir kolonu numeric'e çevirmeyi dene
+                    try:
+                        pd.to_numeric(df[col].dropna().head(10), errors='raise')
+                        column_types[col] = 'sayısal'
+                    except:
+                        column_types[col] = 'metin'
+            except Exception:
+                column_types[col] = 'metin'
+        
+        # Dosya bilgilerini session'a kaydet
+        session['current_file'] = filename
+        session['file_columns'] = columns
+        session['column_types'] = column_types
+        
+        return render_template('select_columns.html', 
+                             filename=filename, 
+                             columns=columns, 
+                             column_types=column_types,
+                             preview_data=preview_data,
+                             df_shape=df.shape)
+        
+    except Exception as e:
+        print(f"Select columns error: {str(e)}", flush=True)
+        flash(f'Dosya işleme hatası: {str(e)}', 'error')
+        return redirect(url_for('upload.upload_file'))
+
+@results_bp.route('/configure-model', methods=['POST'])
+def configure_model():
+    """
+    Model konfigürasyonu - kullanıcının seçtiği kolonlara göre model ayarları
+    """
+    try:
+        # Form verilerini al
+        target_column = request.form.get('target_column')
+        feature_columns = request.form.getlist('feature_columns')
+        
+        if not target_column or not feature_columns:
+            flash('Hedef kolon ve en az bir özellik kolonu seçmelisiniz!', 'error')
+            return redirect(url_for('results.select_columns', filename=session.get('current_file')))
+        
+        # Seçimleri session'a kaydet
+        session['target_column'] = target_column
+        session['feature_columns'] = feature_columns
+        
+        # Veri ön işleme için gerekli bilgileri hazırla
+        filename = session.get('current_file')
+        filepath = os.path.join('uploads', filename)
+        df = pd.read_csv(filepath)
+        
+        # Seçilen kolonlardaki eksik veri sayısını hesapla
+        missing_data = {}
+        for col in [target_column] + feature_columns:
+            missing_count = df[col].isnull().sum()
+            missing_data[col] = {
+                'count': int(missing_count),
+                'percentage': round((missing_count / len(df)) * 100, 2)
+            }
+        
+        return render_template('configure_model.html',
+                             filename=filename,
+                             target_column=target_column,
+                             feature_columns=feature_columns,
+                             missing_data=missing_data,
+                             total_rows=len(df))
+        
+    except Exception as e:
+        flash(f'Hata oluştu: {str(e)}', 'error')
+        return redirect(url_for('results.select_columns', filename=session.get('current_file')))
+
+@results_bp.route('/train-model', methods=['POST'])
 def train_model():
     """
-    Model eğitimi sayfası - Basit form yaklaşımı
-    
-    GET: Model eğitim formunu göster
-    POST: Form verilerini al ve modeli eğit
+    Model eğitimi - kullanıcının seçtiği parametrelerle model eğitir
     """
-    if request.method == 'POST':
+    try:
         # Form verilerini al
-        filename = request.form.get('filename')
-        model_type = request.form.get('model_type', 'linear_regression')
+        model_type = request.form.get('model_type')
+        test_size = float(request.form.get('test_size', 0.2))
+        handle_missing = request.form.get('handle_missing', 'drop')
         
-        try:
-            # Dosya kontrolü
-            if not filename:
-                flash('Dosya adı gerekli!', 'error')
-                return redirect(url_for('results.train_model'))
-            
-            filepath = os.path.join('uploads', filename)
-            if not os.path.exists(filepath):
-                flash('Dosya bulunamadı!', 'error')
-                return redirect(url_for('results.train_model'))
-            
-            # TODO: Buraya kendi model eğitim kodunuzu yazın
-            # Örnek:
-            # if filename.endswith('.csv'):
-            #     df = pd.read_csv(filepath)
-            # else:
-            #     df = pd.read_excel(filepath)
-            # 
-            # # Veriyi hazırla
-            # X, y = prepare_data(df)
-            # 
-            # # Modeli eğit
-            # if model_type == 'linear_regression':
-            #     model = LinearRegression()
-            # else:
-            #     model = RandomForestRegressor()
-            # 
-            # model.fit(X, y)
-            # 
-            # # Performans hesapla
-            # score = model.score(X, y)
-            
-            # Şimdilik başarı mesajı
-            flash(f'Model eğitimi başlatıldı! Dosya: {filename}, Model: {model_type}', 'success')
-            return redirect(url_for('results.results'))
-            
-        except Exception as e:
-            flash(f'Hata oluştu: {str(e)}', 'error')
-            return redirect(url_for('results.train_model'))
-    
-    # GET isteği - Form sayfasını göster
-    # Yüklenmiş dosyaları listele
-    uploaded_files = []
-    uploads_dir = 'uploads'
-    if os.path.exists(uploads_dir):
-        for file in os.listdir(uploads_dir):
-            if file.endswith(('.csv', '.xlsx', '.xls')):
-                uploaded_files.append(file)
+        filename = session.get('current_file')
+        target_column = session.get('target_column')
+        feature_columns = session.get('feature_columns')
+        
+        if not all([filename, target_column, feature_columns, model_type]):
+            flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
+            return redirect(url_for('upload.upload_file'))
+        
+        # TODO: Buraya gerçek model eğitim kodunu yazabilirsiniz
+        # 1. Veriyi yükle
+        # 2. Seçilen kolonları filtrele  
+        # 3. Eksik verileri handle et
+        # 4. Train/test split yap
+        # 5. Modeli eğit
+        # 6. Performans metriklerini hesapla
+        # 7. Modeli kaydet
+        
+        # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
+        model_performance = {
+            'accuracy': 89.5,
+            'mse': 0.12,
+            'r2_score': 0.87
+        }
+        
+        # Model bilgilerini session'a kaydet
+        session['trained_model'] = {
+            'filename': filename,
+            'target_column': target_column,
+            'feature_columns': feature_columns,
+            'model_type': model_type,
+            'test_size': test_size,
+            'handle_missing': handle_missing,
+            'performance': model_performance,
+            'trained_at': '2024-01-15 10:30:00'  # Gerçek tarih için pd.Timestamp.now() kullanabilirsiniz
+        }
+        
+        flash(f'{model_type} modeli başarıyla eğitildi!', 'success')
+        return render_template('training_results.html', 
+                             model_info=session['trained_model'],
+                             performance=model_performance)
+        
+    except Exception as e:
+        flash(f'Model eğitimi hatası: {str(e)}', 'error')
+        return redirect(url_for('results.configure_model'))
     
     return render_template('train_model.html', uploaded_files=uploaded_files)
 
 @results_bp.route('/make-prediction', methods=['GET', 'POST'])
 def make_prediction():
     """
-    Tahmin yapma sayfası - Basit form yaklaşımı
-    
-    GET: Tahmin formunu göster
-    POST: Form verilerini al ve tahmin yap
+    Tahmin yapma sayfası - eğitilmiş modelle yeni tahminler yapar
     """
+    # Eğitilmiş model var mı kontrol et
+    trained_model = session.get('trained_model')
+    if not trained_model:
+        flash('Önce bir model eğitmelisiniz!', 'error')
+        return redirect(url_for('upload.upload_file'))
+    
     if request.method == 'POST':
         try:
-            # Form verilerini al
-            # TODO: Burada form verilerinizi kendi modelinize göre ayarlayın
-            feature1 = request.form.get('feature1', type=float)
-            feature2 = request.form.get('feature2', type=float)
+            # Form verilerinden tahmin değerlerini al
+            prediction_data = {}
+            for feature in trained_model['feature_columns']:
+                value = request.form.get(feature)
+                if value:
+                    # Sayısal değerleri float'a çevir
+                    try:
+                        prediction_data[feature] = float(value)
+                    except ValueError:
+                        prediction_data[feature] = value
+                else:
+                    flash(f'{feature} alanı boş bırakılamaz!', 'error')
+                    return redirect(url_for('results.make_prediction'))
             
-            if feature1 is None or feature2 is None:
-                flash('Tüm alanları doldurun!', 'error')
-                return redirect(url_for('results.make_prediction'))
+            # TODO: Buraya gerçek tahmin kodunu yazabilirsiniz
+            # model = joblib.load(f"models/{trained_model['filename']}_{trained_model['model_type']}.pkl")
+            # prediction = model.predict([list(prediction_data.values())])[0]
             
-            # TODO: Buraya kendi tahmin kodunuzu yazın
-            # Örnek:
-            # model = joblib.load('uploads/trained_model.pkl')
-            # prediction = model.predict([[feature1, feature2]])
+            # Şimdilik örnek tahmin (siz gerçek kodu yazacaksınız)
+            example_prediction = 1250.75  # Örnek değer
             
-            # Şimdilik örnek tahmin
-            example_prediction = (feature1 * 1.5) + (feature2 * 0.8) + 100
-            
-            flash(f'Tahmin sonucu: {example_prediction:.2f}', 'success')
-            return render_template('prediction_result.html', 
-                                 prediction=example_prediction,
-                                 feature1=feature1, 
-                                 feature2=feature2)
+            return render_template('prediction_result.html',
+                                 prediction=round(example_prediction, 2),
+                                 input_data=prediction_data,
+                                 model_info=trained_model)
             
         except Exception as e:
-            flash(f'Hata oluştu: {str(e)}', 'error')
+            flash(f'Tahmin yapma hatası: {str(e)}', 'error')
             return redirect(url_for('results.make_prediction'))
     
-    # GET isteği - Form sayfasını göster
-    return render_template('make_prediction.html')
+    # GET isteği - Tahmin formunu göster
+    return render_template('make_prediction.html', 
+                         model_info=trained_model,
+                         feature_columns=trained_model['feature_columns'])
+
+@results_bp.route('/clear-session')
+def clear_session():
+    """
+    Session'ı temizler ve başa döner
+    """
+    session.clear()
+    flash('Oturum temizlendi. Yeni bir analiz başlatabilirsiniz.', 'info')
+    return redirect(url_for('main.index'))

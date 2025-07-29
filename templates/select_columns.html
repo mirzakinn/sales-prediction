@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Kolon Seçimi - Satış Tahmin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-columns"></i>
+                        Kolon Seçimi
+                    </h3>
+                    <p class="card-subtitle">Dosya: <strong>{{ filename }}</strong> | {{ df_shape[0] }} satır, {{ df_shape[1] }} kolon</p>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Veri Önizleme -->
+                    <div class="mb-4">
+                        <h5>Veri Önizleme</h5>
+                        {% if preview_data %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        {% for col in columns %}
+                                        <th>{{ col|safe }} <small class="text-muted">({{ column_types.get(col, 'bilinmiyor') }})</small></th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in preview_data %}
+                                    <tr>
+                                        {% for col in columns %}
+                                        <td>{{ row.get(col, '')|safe }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Veri önizlemesi yüklenemedi, ancak dosya başarıyla okundu.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Kolon Seçim Formu -->
+                    <form method="POST" action="{{ url_for('results.configure_model') }}">
+                        <div class="row">
+                            <!-- Hedef Kolon -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="target_column">
+                                        <i class="fas fa-bullseye"></i>
+                                        Hedef Kolon (Tahmin edilecek değer)
+                                    </label>
+                                    <select name="target_column" id="target_column" class="form-control" required>
+                                        <option value="">Hedef kolonunu seçin...</option>
+                                        {% for col in columns %}
+                                        {% if column_types[col] == 'sayısal' %}
+                                        <option value="{{ col }}">{{ col }} ({{ column_types[col] }})</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Sadece sayısal kolonlar gösteriliyor. Bu, modelinizin tahmin edeceği değerdir.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Özellik Kolonları -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>
+                                        <i class="fas fa-list-check"></i>
+                                        Özellik Kolonları (Tahmin için kullanılacak)
+                                    </label>
+                                    <div class="feature-selection" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                        {% for col in columns %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="feature_columns" value="{{ col }}" id="feature_{{ loop.index }}">
+                                            <label class="form-check-label" for="feature_{{ loop.index }}">
+                                                {{ col }} <small class="text-muted">({{ column_types[col] }})</small>
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        En az bir özellik kolonu seçmelisiniz. Bu kolonlar modelinizin tahmin yapmak için kullanacağı verilerdir.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('upload.upload_file') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Geri
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-arrow-right"></i> Devam Et
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Hedef kolon seçildiğinde, aynı kolonu özellik listesinden çıkar
+document.getElementById('target_column').addEventListener('change', function() {
+    const targetValue = this.value;
+    const featureCheckboxes = document.querySelectorAll('input[name="feature_columns"]');
+    
+    featureCheckboxes.forEach(checkbox => {
+        if (checkbox.value === targetValue) {
+            checkbox.checked = false;
+            checkbox.disabled = true;
+            checkbox.parentElement.style.opacity = '0.5';
+        } else {
+            checkbox.disabled = false;
+            checkbox.parentElement.style.opacity = '1';
+        }
+    });
+});
+
+// En az bir özellik seçildiğinden emin ol
+document.querySelector('form').addEventListener('submit', function(e) {
+    const checkedFeatures = document.querySelectorAll('input[name="feature_columns"]:checked');
+    if (checkedFeatures.length === 0) {
+        e.preventDefault();
+        alert('En az bir özellik kolonu seçmelisiniz!');
+    }
+});
+</script>
+{% endblock %}

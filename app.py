@@ -26,6 +26,12 @@ def create_app(config_name='default'):
     app.register_blueprint(upload_bp)
     app.register_blueprint(results_bp)
     
+    # Template context processor - session'ı template'lerde kullanılabilir yap
+    @app.context_processor
+    def inject_session():
+        from flask import session
+        return dict(session=session)
+    
     return app
 
 def get_config_name():
