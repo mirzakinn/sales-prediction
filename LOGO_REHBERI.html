@@ -1,0 +1,37 @@
+<!-- 
+LOGO KULLANIM REHBERİ
+
+Sol üstteki logo alanına kendi logonuzu eklemek için:
+
+1. Logo dosyanızı static/images/ klasörüne koyun
+2. base.html dosyasında şu kısmı bulun:
+
+    <div class="logo-placeholder">
+        <i class="fas fa-chart-line"></i>
+    </div>
+
+3. Bu kısmı şununla değiştirin:
+
+    <img src="{{ url_for('static', filename='images/logo.png') }}" 
+         alt="Logo" class="logo-img">
+
+4. CSS'te logo-img sınıfını tanımlayın:
+
+    .logo-img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+LOGO ÖZELLİKLERİ:
+- Boyut: 40x40 piksel (önerilen)
+- Format: PNG (şeffaf arka plan için) veya JPG
+- Kalite: Yüksek çözünürlük
+- Renk: Kırmızı tonları ile uyumlu
+
+ALTERNATIF LOGO ALANLARI:
+- Hero section'da büyük logo
+- Footer'da küçük logo
+- Favicon olarak browser tab'ında
+-->

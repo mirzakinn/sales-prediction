@@ -6,5 +6,4 @@ matplotlib
 seaborn
 openpyxl
 xlrd
-joblib
 werkzeug

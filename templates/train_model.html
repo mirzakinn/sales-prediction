@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Page Header -->
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-success">
+                <i class="fas fa-brain me-3"></i>Model Eğitimi
+            </h2>
+            <p class="lead text-muted">
+                Yüklediğiniz veri ile makine öğrenmesi modelinizi eğitin
+            </p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Training Form -->
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Model Ayarları
+                </h4>
+            </div>
+            <div class="card-body p-5">
+                <form method="POST">
+                    <!-- Dosya Seçimi -->
+                    <div class="mb-4">
+                        <label for="filename" class="form-label fw-bold">
+                            <i class="fas fa-file-alt me-2"></i>Eğitim Verisi
+                        </label>
+                        {% if uploaded_files %}
+                            <select class="form-select" name="filename" id="filename" required>
+                                <option value="">Dosya seçin...</option>
+                                {% for file in uploaded_files %}
+                                    <option value="{{ file }}">{{ file }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Daha önce yüklediğiniz dosyalardan birini seçin</small>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Henüz dosya yüklememişsiniz. 
+                                <a href="{{ url_for('upload.upload_file') }}" class="alert-link">Buradan dosya yükleyin</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Model Türü Seçimi -->
+                    <div class="mb-4">
+                        <label for="model_type" class="form-label fw-bold">
+                            <i class="fas fa-robot me-2"></i>Model Türü
+                        </label>
+                        <select class="form-select" name="model_type" id="model_type" required>
+                            <option value="linear_regression">Linear Regression (Basit)</option>
+                            <option value="random_forest">Random Forest (Gelişmiş)</option>
+                            <option value="decision_tree">Decision Tree (Orta)</option>
+                        </select>
+                        <small class="text-muted">Başlangıç için Linear Regression önerilir</small>
+                    </div>
+
+                    <!-- Model Açıklamaları -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                                    <h6>Linear Regression</h6>
+                                    <small class="text-muted">
+                                        Basit ve hızlı. Doğrusal ilişkiler için uygun.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tree fa-2x text-success mb-2"></i>
+                                    <h6>Decision Tree</h6>
+                                    <small class="text-muted">
+                                        Anlaşılması kolay. Kategorik veriler için iyi.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-forest fa-2x text-warning mb-2"></i>
+                                    <h6>Random Forest</h6>
+                                    <small class="text-muted">
+                                        Yüksek doğruluk. Karmaşık veriler için uygun.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TODO Uyarısı -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Önemli:</strong> Bu form şu anda sadece template'dir. 
+                        Model eğitim kodlarını siz yazacaksınız!
+                    </div>
+
+                    <!-- Butonlar -->
+                    <div class="text-center">
+                        {% if uploaded_files %}
+                            <button type="submit" class="btn btn-success btn-lg me-3">
+                                <i class="fas fa-play me-2"></i>Modeli Eğit
+                            </button>
+                        {% endif %}
+                        <a href="{{ url_for('upload.upload_file') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-upload me-2"></i>Dosya Yükle
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Yardım Kartı -->
+        <div class="card mt-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Nasıl Çalışır?
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li><strong>Dosya yükleyin</strong> - CSV veya Excel formatında veri</li>
+                    <li><strong>Model seçin</strong> - Başlangıç için Linear Regression</li>
+                    <li><strong>Eğitimi başlatın</strong> - Form gönderimi ile</li>
+                    <li><strong>Sonuçları görün</strong> - Model performansı ve tahminler</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

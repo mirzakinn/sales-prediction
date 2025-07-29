@@ -5,19 +5,27 @@
 <div class="hero-section text-center py-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h1 class="display-4 fw-bold text-primary mb-4">
-                <i class="fas fa-chart-line me-3"></i>Satış Tahmin Sistemi
+            <h1 class="display-4 fw-bold mb-4">
+                Satış Tahmin Sistemi
             </h1>
             <p class="lead mb-4">
                 Excel dosyalarınızı yükleyerek gelişmiş makine öğrenmesi algoritmaları ile 
                 satış tahminleri yapın ve işletmenizin geleceğini planlayın.
             </p>
-            <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg me-3">
-                <i class="fas fa-upload me-2"></i>Veri Yükle
-            </a>
-            <a href="{{ url_for('results') }}" class="btn btn-outline-primary btn-lg">
-                <i class="fas fa-chart-bar me-2"></i>Sonuçları Görüntüle
-            </a>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="{{ url_for('upload.upload_file') }}" class="btn btn-outline-primary btn-lg text-danger border-2 fw-bold" style="background-color: #f8f9fa;">
+                    <i class="fas fa-upload me-2"></i>Veri Yükle
+                </a>
+                <a href="{{ url_for('results.train_model') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-brain me-2"></i>Model Eğit
+                </a>
+                <a href="{{ url_for('results.make_prediction') }}" class="btn btn-info btn-lg">
+                    <i class="fas fa-crystal-ball me-2"></i>Tahmin Yap
+                </a>
+                <a href="{{ url_for('results.results') }}" class="btn btn-outline-primary btn-lg text-danger border-3 fw-bold" style="background-color: #f8f9fa;">
+                    <i class="fas fa-chart-bar me-2"></i>Sonuçları Gör
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -92,8 +100,8 @@
 
 <!-- How it Works Section -->
 <div class="how-it-works mb-5">
-    <h3 class="text-center mb-4">Nasıl Çalışır?</h3>
-    <div class="row">
+    <h3 class="text-center mb-5">Nasıl Çalışır?</h3>
+    <div class="row mt-4">
         <div class="col-md-3 text-center mb-4">
             <div class="step-number">1</div>
             <h5>Dosya Yükle</h5>
@@ -118,10 +126,10 @@
 </div>
 
 <!-- Call to Action -->
-<div class="cta-section text-center bg-primary text-white rounded p-5">
-    <h3 class="mb-3">Hemen Başlayın!</h3>
-    <p class="mb-4">Satış verilerinizi yükleyerek gelecek planlamanızı bugün başlatın.</p>
-    <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-lg">
+<div class="cta-section text-center text-white rounded p-4" style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); box-shadow: 0 0.5rem 1rem rgba(255, 0, 0, 0.3);">
+    <h4 class="mb-3 fw-bold">Hemen Başlayın!</h4>
+    <p class="mb-3">Satış verilerinizi yükleyerek gelecek planlamanızı bugün başlatın.</p>
+    <a href="{{ url_for('upload.upload_file') }}" class="btn btn-light fw-bold border-2" style="color: #ff0000; border-color: #ff0000;">
         <i class="fas fa-rocket me-2"></i>Şimdi Başla
     </a>
 </div>
