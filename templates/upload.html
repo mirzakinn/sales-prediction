@@ -5,7 +5,7 @@
     <div class="col-lg-8">
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">
+            <h2 class="fw-bold" style="color: #ff0000;">
                 <i class="fas fa-cloud-upload-alt me-3"></i>Satış Verilerini Yükle
             </h2>
             <p class="lead text-muted">
@@ -15,7 +15,7 @@
 
         <!-- Upload Card -->
         <div class="card shadow-lg border-0">
-            <div class="card-header bg-primary text-white text-center py-3">
+            <div class="card-header text-white text-center py-3" style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);">
                 <h4 class="mb-0">
                     <i class="fas fa-file-upload me-2"></i>Dosya Yükleme
                 </h4>
@@ -30,7 +30,7 @@
                         
                         <input type="file" class="form-control d-none" id="fileInput" name="file" 
                                accept=".xlsx,.xls,.csv" required>
-                        <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        <button type="button" class="btn fw-bold border-2" style="background-color: #f8f9fa; color: #ff0000; border-color: #ff0000;" onclick="document.getElementById('fileInput').click()">
                             <i class="fas fa-folder-open me-2"></i>Dosya Seç
                         </button>
                     </div>
