@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import json
 import os
 import pandas as pd
+from utils.data_utils import read_file_by_extension, handle_missing_data
 
 results_bp = Blueprint('results', __name__)
 
@@ -156,11 +157,25 @@ def train_model():
         filename = session.get('current_file')
         target_column = session.get('target_column')
         feature_columns = session.get('feature_columns')
+
+        filepath = os.path.join('uploads', filename)       
+        df = read_file_by_extension(filepath, filename)
+
+        # Seçilen kolonları filtrele
+        selected_columns = [target_column] + feature_columns
+        df_filtered = df[selected_columns].copy()
         
+        # Eksik verileri işle
+        df_processed = handle_missing_data(
+        df_filtered, 
+        method=handle_missing,
+        target_column=target_column
+        )
+
         if not all([filename, target_column, feature_columns, model_type]):
             flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
             return redirect(url_for('upload.upload_file'))
-        
+      
         # TODO: Buraya gerçek model eğitim kodunu yazabilirsiniz
         # 1. Veriyi yükle
         # 2. Seçilen kolonları filtrele  
