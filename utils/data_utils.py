@@ -92,12 +92,11 @@ def handle_missing_data(df, method='drop', target_column=None):
     """
     df_processed = df.copy()
     
-    if method == 'drop':
-        # Eksik satırları sil
+    if method == 'drop': # eksik satırları sil
         df_processed = df_processed.dropna()
         
-    elif method == 'mean':
-        # Sayısal kolonlar için ortalama ile doldur
+    elif method == 'mean': 
+        # sayısal kolonlar için ortalama ile doldurma
         numeric_columns = df_processed.select_dtypes(include=['number']).columns
         
         for col in numeric_columns:
@@ -105,7 +104,7 @@ def handle_missing_data(df, method='drop', target_column=None):
                 mean_value = df_processed[col].mean()
                 df_processed[col].fillna(mean_value, inplace=True)
         
-        # Kategorik kolonlar için mode ile doldur
+        # kategorik kolonlar için mod ile doldurma
         categorical_columns = df_processed.select_dtypes(include=['object']).columns
         for col in categorical_columns:
             if df_processed[col].isnull().any():
@@ -117,7 +116,7 @@ def handle_missing_data(df, method='drop', target_column=None):
                 df_processed[col].fillna(mode_value, inplace=True)
                 
     elif method == 'median':
-        # Sayısal kolonlar için medyan ile doldur
+        # sayısal kolonlar için medyan ile doldurma
         numeric_columns = df_processed.select_dtypes(include=['number']).columns
         
         for col in numeric_columns:
@@ -125,7 +124,7 @@ def handle_missing_data(df, method='drop', target_column=None):
                 median_value = df_processed[col].median()
                 df_processed[col].fillna(median_value, inplace=True)
         
-        # Kategorik kolonlar için mode ile doldur
+        # kategorik kolonlar için mod ile doldurma
         categorical_columns = df_processed.select_dtypes(include=['object']).columns
         for col in categorical_columns:
             if df_processed[col].isnull().any():

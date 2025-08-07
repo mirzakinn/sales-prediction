@@ -6,7 +6,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import json
 import os
 import pandas as pd
-from utils.data_utils import read_file_by_extension, handle_missing_data
+from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
+from utils.ml_utils import *
 
 results_bp = Blueprint('results', __name__)
 
@@ -100,11 +101,41 @@ def select_columns(filename):
         flash(f'Dosya işleme hatası: {str(e)}', 'error')
         return redirect(url_for('upload.upload_file'))
 
-@results_bp.route('/configure-model', methods=['POST'])
+@results_bp.route('/configure-model', methods=['GET', 'POST'])
 def configure_model():
     """
     Model konfigürasyonu - kullanıcının seçtiği kolonlara göre model ayarları
     """
+    if request.method == 'GET':
+        # GET isteği - sayfa yenilendiğinde veya doğrudan erişimde
+        filename = session.get('current_file')
+        target_column = session.get('target_column')
+        feature_columns = session.get('feature_columns')
+        
+        if not all([filename, target_column, feature_columns]):
+            flash('Session bilgileri eksik. Lütfen kolon seçimini tekrar yapın.', 'error')
+            return redirect(url_for('upload.upload_file'))
+        
+        # Eksik veri analizini tekrar yap
+        filepath = os.path.join('uploads', filename)
+        df = pd.read_csv(filepath)
+        
+        missing_data = {}
+        for col in [target_column] + feature_columns:
+            missing_count = df[col].isnull().sum()
+            missing_data[col] = {
+                'count': int(missing_count),
+                'percentage': round((missing_count / len(df)) * 100, 2)
+            }
+        
+        return render_template('configure_model.html',
+                             filename=filename,
+                             target_column=target_column,
+                             feature_columns=feature_columns,
+                             missing_data=missing_data,
+                             total_rows=len(df))
+    
+    # POST isteği - form gönderildiğinde
     try:
         # Form verilerini al
         target_column = request.form.get('target_column')
@@ -171,26 +202,28 @@ def train_model():
         method=handle_missing,
         target_column=target_column
         )
+        
+        df_processed = handle_outliers(
+        df_processed,
+        columns=selected_columns
+        )
 
         if not all([filename, target_column, feature_columns, model_type]):
             flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
             return redirect(url_for('upload.upload_file'))
-      
-        # TODO: Buraya gerçek model eğitim kodunu yazabilirsiniz
-        # 1. Veriyi yükle
-        # 2. Seçilen kolonları filtrele  
-        # 3. Eksik verileri handle et
+
+
+        df_processed, encoders = encoding_data(df_processed)
+        _, x, y, scaler = scaling_data(df_processed,feature_columns, target_column)
+        x_train, x_test, y_train, y_test = data_split(x, y, test_size)
+        reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type)
         # 4. Train/test split yap
         # 5. Modeli eğit
         # 6. Performans metriklerini hesapla
         # 7. Modeli kaydet
         
         # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
-        model_performance = {
-            'accuracy': 89.5,
-            'mse': 0.12,
-            'r2_score': 0.87
-        }
+        model_performance = analyze_model(y_test, y_pred)
         
         # Model bilgilerini session'a kaydet
         session['trained_model'] = {
@@ -201,8 +234,12 @@ def train_model():
             'test_size': test_size,
             'handle_missing': handle_missing,
             'performance': model_performance,
-            'trained_at': '2024-01-15 10:30:00'  # Gerçek tarih için pd.Timestamp.now() kullanabilirsiniz
+            'trained_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')  # String'e çevir
         }
+
+        #
+        print(f"Model Performance: {model_performance}")  # Debug için
+        flash(f'Model eğitildi! R² Score: {model_performance["r2_score"]:.3f}', 'success')
         
         flash(f'{model_type} modeli başarıyla eğitildi!', 'success')
         return render_template('training_results.html', 
