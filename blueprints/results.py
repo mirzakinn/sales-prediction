@@ -21,7 +21,9 @@ def results():
     model_results = [
         {
             'model_name': 'Linear Regression',
-            'accuracy': 85.2,
+            'r2_score': 0.852,
+            'mae': 1250.75,
+            'mse': 2500000,
             'dataset': 'sales_data.csv',
             'target_column': 'sales',
             'features': ['price', 'marketing_spend'],
@@ -29,7 +31,7 @@ def results():
         }
     ]
     
-    return render_template('results.html', results=model_results)
+    return render_template('results_new.html', results=model_results)
 
 @results_bp.route('/select-columns/<filename>')
 def select_columns(filename):

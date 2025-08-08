@@ -21,42 +21,42 @@
             <div class="row">
                 <!-- Model Bilgileri -->
                 <div class="col-md-6">
-                    <div class="card">
+                    <div class="card h-100">
                         <div class="card-header">
                             <h5 class="card-title">
                                 <i class="fas fa-info-circle"></i>
                                 Model Bilgileri
                             </h5>
                         </div>
-                        <div class="card-body">
-                            <table class="table table-borderless">
+                        <div class="card-body d-flex align-items-center justify-content-center">
+                            <table class="table table-borderless mb-0" style="font-size: 1.1em;">
                                 <tr>
-                                    <td><strong>Model Türü:</strong></td>
-                                    <td>{{ model_info.model_type.replace('_', ' ').title() }}</td>
+                                    <td style="padding: 12px 8px;"><strong>Model Türü:</strong></td>
+                                    <td style="padding: 12px 8px;">{{ model_info.model_type.replace('_', ' ').title() }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Veri Dosyası:</strong></td>
-                                    <td>{{ model_info.filename }}</td>
+                                    <td style="padding: 12px 8px;"><strong>Veri Dosyası:</strong></td>
+                                    <td style="padding: 12px 8px;">{{ model_info.filename }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Hedef Kolon:</strong></td>
-                                    <td><span class="badge badge-primary">{{ model_info.target_column }}</span></td>
+                                    <td style="padding: 12px 8px;"><strong>Hedef Kolon:</strong></td>
+                                    <td style="padding: 12px 8px;"><strong>{{ model_info.target_column }}</strong></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Özellik Sayısı:</strong></td>
-                                    <td>{{ model_info.feature_columns|length }} kolon</td>
+                                    <td style="padding: 12px 8px;"><strong>Özellik Sayısı:</strong></td>
+                                    <td style="padding: 12px 8px;">{{ model_info.feature_columns|length }} kolon</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Test Veri Oranı:</strong></td>
-                                    <td>%{{ (model_info.test_size * 100)|int }}</td>
+                                    <td style="padding: 12px 8px;"><strong>Test Veri Oranı:</strong></td>
+                                    <td style="padding: 12px 8px;">%{{ (model_info.test_size * 100)|int }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Eksik Veri İşleme:</strong></td>
-                                    <td>{{ model_info.handle_missing.title() }}</td>
+                                    <td style="padding: 12px 8px;"><strong>Eksik Veri İşleme:</strong></td>
+                                    <td style="padding: 12px 8px;">{{ model_info.handle_missing.title() }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Eğitim Tarihi:</strong></td>
-                                    <td>{{ model_info.trained_at }}</td>
+                                    <td style="padding: 12px 8px;"><strong>Eğitim Tarihi:</strong></td>
+                                    <td style="padding: 12px 8px;">{{ model_info.trained_at }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -65,7 +65,7 @@
 
                 <!-- Performans Metrikleri -->
                 <div class="col-md-6">
-                    <div class="card">
+                    <div class="card h-100">
                         <div class="card-header">
                             <h5 class="card-title">
                                 <i class="fas fa-chart-line"></i>
@@ -76,54 +76,75 @@
                             <div class="performance-metrics">
                                 <div class="metric-item mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span>Doğruluk (Accuracy)</span>
-                                        <span class="badge badge-success">%{{ performance.accuracy }}</span>
+                                        <span>R² Score (Açıklama Gücü)</span>
+                                        <span class="badge bg-success text-white">{{ performance.r2_score|round(4) }}</span>
                                     </div>
                                     <div class="progress mt-1">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ performance.accuracy }}%" aria-valuenow="{{ performance.accuracy }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ (performance.r2_score * 100)|int }}%" aria-valuenow="{{ (performance.r2_score * 100)|int }}" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
+                                    <small class="text-muted">1.0'a yakın değer daha iyidir</small>
                                 </div>
 
                                 <div class="metric-item mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span>R² Score</span>
-                                        <span class="badge badge-info">{{ performance.r2_score }}</span>
+                                        <span>MAE (Ortalama Mutlak Hata)</span>
+                                        <span class="badge bg-info text-white">{{ performance.mae|round(2) }}</span>
                                     </div>
-                                    <div class="progress mt-1">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ (performance.r2_score * 100)|int }}%" aria-valuenow="{{ (performance.r2_score * 100)|int }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
+                                    <small class="text-muted">Düşük değer daha iyidir</small>
                                 </div>
 
                                 <div class="metric-item mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span>MSE (Mean Squared Error)</span>
-                                        <span class="badge badge-warning">{{ performance.mse }}</span>
+                                        <span>MSE (Ortalama Kare Hata)</span>
+                                        <span class="badge bg-warning text-dark">{{ performance.mse|round(2) }}</span>
+                                    </div>
+                                    <small class="text-muted">Düşük değer daha iyidir</small>
+                                </div>
+
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>RMSE (Kök Ortalama Kare Hata)</span>
+                                        <span class="badge bg-danger text-white">{{ performance.rmse|round(2) }}</span>
                                     </div>
                                     <small class="text-muted">Düşük değer daha iyidir</small>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <!-- Performans Yorumu -->
-                            <div class="mt-3 p-3 bg-light rounded">
-                                {% if performance.accuracy >= 90 %}
+            <!-- Performans Yorumu -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-comments"></i>
+                                Performans Yorumu
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="p-3 bg-light rounded">
+                                {% if performance.r2_score >= 0.9 %}
                                 <div class="text-success">
                                     <i class="fas fa-thumbs-up"></i>
-                                    <strong>Mükemmel!</strong> Model çok iyi performans gösteriyor.
+                                    <strong>Mükemmel!</strong> Model veriyi çok iyi açıklıyor (R² ≥ 0.9).
                                 </div>
-                                {% elif performance.accuracy >= 80 %}
+                                {% elif performance.r2_score >= 0.7 %}
                                 <div class="text-info">
                                     <i class="fas fa-thumbs-up"></i>
-                                    <strong>İyi!</strong> Model kabul edilebilir performans gösteriyor.
+                                    <strong>İyi!</strong> Model kabul edilebilir açıklama gücüne sahip (R² ≥ 0.7).
                                 </div>
-                                {% elif performance.accuracy >= 70 %}
+                                {% elif performance.r2_score >= 0.5 %}
                                 <div class="text-warning">
                                     <i class="fas fa-exclamation-circle"></i>
-                                    <strong>Orta!</strong> Model geliştirilmeye ihtiyaç duyuyor.
+                                    <strong>Orta!</strong> Model geliştirilmeye ihtiyaç duyuyor (R² ≥ 0.5).
                                 </div>
                                 {% else %}
                                 <div class="text-danger">
                                     <i class="fas fa-times-circle"></i>
-                                    <strong>Zayıf!</strong> Farklı bir model veya daha fazla veri deneyin.
+                                    <strong>Zayıf!</strong> Farklı bir model veya daha fazla veri deneyin (R² < 0.5).
                                 </div>
                                 {% endif %}
                             </div>
@@ -144,7 +165,7 @@
                         </div>
                         <div class="card-body">
                             {% for feature in model_info.feature_columns %}
-                            <span class="badge badge-secondary mr-2 mb-2">{{ feature }}</span>
+                            <strong>{{ feature }}</strong>{% if not loop.last %}, {% endif %}
                             {% endfor %}
                         </div>
                     </div>

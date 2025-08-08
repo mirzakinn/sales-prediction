@@ -23,12 +23,11 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" 
                     alt="Satış Tahmin Sistemi" class="logo-img">
             </a>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto" style="margin-right: -100px;">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.index') }}">Ana Sayfa</a>
                     </li>
@@ -36,8 +35,8 @@
                         <a class="nav-link" href="{{ url_for('upload.upload_file') }}">Veri Yükleme</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            ML İşlemleri
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Tahmin İşlemleri
                         </a>
                         <ul class="dropdown-menu">
                             {% if session.get('current_file') %}
@@ -53,7 +52,7 @@
                             {% endif %}
                             
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('results.results') }}">Sonuçları Gör</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('results.results') }}">Önceki Sonuçlar ve Eğitilmiş Modeller</a></li>
                             
                             {% if session.get('current_file') or session.get('trained_model') %}
                             <li><hr class="dropdown-divider"></li>

@@ -97,5 +97,4 @@ def analyze_model(y_test, y_pred):
         'rmse': rmse,
         'mae': mae,
         'r2_score': r2,
-        'accuracy': r2  # ← Template için ekle
     }
