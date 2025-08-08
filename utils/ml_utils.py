@@ -4,6 +4,9 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb
 
 # kategorik verileri sayısal hale getir
 # label encoding ve one-hot encoding
@@ -47,9 +50,41 @@ def linear_regression(x_train, x_test, y_train, y_test):
 
     return reg, y_pred, score
 
+def decision_tree(x_train, x_test, y_train, y_test):
+    regressor = DecisionTreeRegressor()
+    model = regressor.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    score = model.score(x_test, y_test)
+
+    return model, y_pred, score
+
+def random_forest(x_train, x_test, y_train, y_test):
+    regressor = RandomForestRegressor(n_estimators=200)
+    model = regressor.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    score = model.score(x_test, y_test)
+
+    return model, y_pred, score
+
+def xgboost(x_train, x_test, y_train, y_test):
+    regressor = xgb.XGBRegressor()
+    model = regressor.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    score = model.score(x_test, y_test)
+
+    return model, y_pred, score
+
 def select_model(x_train, y_train, x_test, y_test, model_type):
     if model_type == 'linear_regression':
         return linear_regression(x_train, x_test, y_train, y_test)
+    elif model_type == 'decision_tree':
+        return decision_tree(x_train, x_test, y_train, y_test)
+    elif model_type == 'random_forest':
+        return random_forest(x_train, x_test, y_train, y_test)
+    elif model_type == 'xgboost':
+        return xgboost(x_train, x_test, y_train, y_test)
+    else:
+        raise ValueError(f"Bilinmeyen model tipi: {model_type}")
 
 def analyze_model(y_test, y_pred):
     mse = mean_squared_error(y_test, y_pred)
