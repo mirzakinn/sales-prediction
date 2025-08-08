@@ -225,6 +225,12 @@ def train_model():
         # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
         model_performance = analyze_model(y_test, y_pred)
         
+        # Global değişkenlere model objelerini kaydet
+        global CURRENT_MODEL, CURRENT_ENCODERS, CURRENT_SCALER
+        CURRENT_MODEL = reg
+        CURRENT_ENCODERS = encoders
+        CURRENT_SCALER = scaler
+        
         # Model bilgilerini session'a kaydet
         session['trained_model'] = {
             'filename': filename,
@@ -283,8 +289,31 @@ def make_prediction():
             # model = joblib.load(f"models/{trained_model['filename']}_{trained_model['model_type']}.pkl")
             # prediction = model.predict([list(prediction_data.values())])[0]
             
+            # Global değişkenlerden model objelerini al
+            global CURRENT_MODEL, CURRENT_ENCODERS, CURRENT_SCALER
+            
+            if CURRENT_MODEL is None:
+                flash('Model bulunamadı! Lütfen modeli yeniden eğitin.', 'error')
+                return redirect(url_for('upload.upload_file'))
+            
+            # Kullanıcı verisini DataFrame'e çevir
+            input_df = pd.DataFrame([prediction_data])
+            
+            # Kategorik kolonları encode et (eğitimde olduğu gibi)
+            for col in input_df.columns:
+                if col in CURRENT_ENCODERS:
+                    # String'e çevir ve encode et
+                    input_df[col] = CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
+            
+            # Feature'ları doğru sırayla al ve scale et
+            feature_values = input_df[trained_model['feature_columns']].values
+            input_scaled = CURRENT_SCALER.transform(feature_values)
+            
+            # Gerçek tahmin yap
+            prediction = CURRENT_MODEL.predict(input_scaled)[0]
+            
             # Şimdilik örnek tahmin (siz gerçek kodu yazacaksınız)
-            example_prediction = 1250.75  # Örnek değer
+            example_prediction = prediction  # Artık gerçek tahmin!
             
             return render_template('prediction_result.html',
                                  prediction=round(example_prediction, 2),
