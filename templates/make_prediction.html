@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Tahmin Yap - Satış Tahmin{% endblock %}
+{% block title %}Tahmin Yap - Tahmin{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,7 +10,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-magic"></i>
-                        Satış Tahmini Yap
+                        Tahmin Yap
                     </h3>
                     <p class="card-subtitle">
                         Model: <strong>{{ model_info.model_type.replace('_', ' ').title() }}</strong> | 
@@ -25,10 +25,18 @@
                         <p><strong>Hedef:</strong> {{ model_info.target_column }}</p>
                         <p><strong>Özellikler:</strong> 
                             {% for feature in model_info.feature_columns %}
-                            <span class="badge badge-secondary">{{ feature }}</span>
+                            <span class="badge" style="background-color: #0d6efd; color: white; margin-right: 5px;">{{ feature }}</span>
                             {% endfor %}
                         </p>
-                        <p class="mb-0"><strong>Doğruluk:</strong> %{{ model_info.performance.accuracy }}</p>
+                        <p class="mb-0"><strong>Doğruluk:</strong> 
+                            {% if model_info.performance.accuracy %}
+                                %{{ model_info.performance.accuracy }}
+                            {% elif model_info.performance.r2_score %}
+                                %{{ (model_info.performance.r2_score * 100)|round(1) }}
+                            {% else %}
+                                Hesaplanamadı
+                            {% endif %}
+                        </p>
                     </div>
 
                     <!-- Tahmin Formu -->
@@ -37,8 +45,8 @@
                             {% for feature in feature_columns %}
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <div class="form-group">
-                                    <label for="{{ feature }}">
-                                        <i class="fas fa-chart-bar"></i>
+                                    <label for="{{ feature }}" style="color: #2c3e50; font-weight: 600;">
+                                        <i class="fas fa-chart-bar" style="color: #ff0000;"></i>
                                         {{ feature.replace('_', ' ').title() }}
                                     </label>
                                     <input type="number" 
@@ -48,7 +56,7 @@
                                            step="any" 
                                            required
                                            placeholder="{{ feature }} değerini girin">
-                                    <small class="form-text text-muted">
+                                    <small class="form-text" style="color: #6c757d; font-weight: 500;">
                                         Bu özellik için sayısal değer girin
                                     </small>
                                 </div>

@@ -1,5 +1,213 @@
 // Results page JavaScript functions
 
+// Initialize results page based on page type
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if this is the new results page (models listing)
+    if (document.querySelector('.card-header.bg-primary') || document.querySelector('.card.h-100.border-0.shadow-sm')) {
+        initializeModelsPage();
+    }
+    
+    // Check if this is the old results page (predictions chart)
+    if (document.getElementById('predictionChart')) {
+        // Old chart initialization will be handled by existing code
+    }
+});
+
+// New function for models page
+function initializeModelsPage() {
+    // Get all model cards
+    const modelCards = document.querySelectorAll('.card.h-100.border-0.shadow-sm');
+    
+    modelCards.forEach((card, index) => {
+        const detailBtn = card.querySelector('.model-detail-btn');
+        const predictBtn = card.querySelector('.model-predict-btn'); // Bu selector artık kullanılmıyor
+        
+        if (detailBtn) {
+            detailBtn.setAttribute('data-model-index', index);
+            detailBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModelDetails(this.getAttribute('data-model-index'), card);
+            });
+        }
+        
+        // Prediction butonuna müdahale etme - form kendi işini görsün
+        // Form submit'i normal şekilde çalışacak
+    });
+}
+
+// Show detailed model information
+function showModelDetails(modelIndex, cardElement) {
+    try {
+        // Extract model data from button's data attributes (database'den gelen gerçek veriler)
+        const button = cardElement.querySelector('.model-detail-btn');
+        
+        const modelId = button.getAttribute('data-model-id');
+        const modelType = button.getAttribute('data-model-type');
+        const targetColumn = button.getAttribute('data-target-column');
+        const r2Score = parseFloat(button.getAttribute('data-r2-score'));
+        const mae = parseFloat(button.getAttribute('data-mae'));
+        const mse = parseFloat(button.getAttribute('data-mse'));
+        const rmse = parseFloat(button.getAttribute('data-rmse'));
+        const createdAt = button.getAttribute('data-created-at');
+        const featuresJson = button.getAttribute('data-features');
+        
+        // JSON string'i parse et
+        let features = [];
+        try {
+            features = JSON.parse(featuresJson.replace(/'/g, '"'));
+        } catch {
+            features = featuresJson ? featuresJson.split(',') : [];
+        }
+
+        // Calculate additional display values
+        const r2Percentage = (r2Score * 100).toFixed(1);
+        const modelTypeDisplay = modelType.replace('_', ' ').split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+
+        // Create modal content
+        const modalHTML = `
+            <div class="modal fade" id="modelDetailsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background-color: #ff0000; color: white;">
+                            <h5 class="modal-title">
+                                <i class="fas fa-robot me-2"></i>Model Detayları: ${modelTypeDisplay}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <!-- Sol Kolon: Temel Bilgiler -->
+                                <div class="col-md-6">
+                                    <h6 style="color: #ff0000;"><i class="fas fa-database me-2"></i>Temel Model Bilgileri</h6>
+                                    <table class="table table-sm">
+                                        <tr><td><strong>Model ID:</strong></td><td><span class="badge" style="background-color: #ff0000;">#${modelId}</span></td></tr>
+                                        <tr><td><strong>Model Türü:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelTypeDisplay}</span></td></tr>
+                                        <tr><td><strong>Veri Dosyası:</strong></td><td>data.csv</td></tr>
+                                        <tr><td><strong>Hedef Değişken:</strong></td><td><span class="badge" style="background-color: #ff0000;">${targetColumn}</span></td></tr>
+                                        <tr><td><strong>Özellik Değişkenleri:</strong></td><td>
+                                            ${features.map(feature => `<span class="badge" style="background-color: #ff0000; margin-right: 5px;">${feature}</span>`).join('')}
+                                        </td></tr>
+                                        <tr><td><strong>Eğitim Tarihi:</strong></td><td>${createdAt}</td></tr>
+                                        <tr><td><strong>Model Durumu:</strong></td><td><span class="badge bg-success">Aktif</span></td></tr>
+                                    </table>
+                                </div>
+                                
+                                <!-- Sağ Kolon: Performans Metrikleri -->
+                                <div class="col-md-6">
+                                    <h6 class="text-success"><i class="fas fa-chart-line me-2"></i>Performans Metrikleri</h6>
+                                    <div class="text-center mb-3">
+                                        <div class="h3 text-success mb-0">${r2Percentage}%</div>
+                                        <small class="text-muted">R² Score (Açıklama Gücü)</small>
+                                    </div>
+                                    <div class="row text-center mb-3">
+                                        <div class="col-4">
+                                            <div class="h5 text-info mb-0">${mae.toFixed(2)}</div>
+                                            <small class="text-muted">MAE</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="h5 text-warning mb-0">${mse.toFixed(2)}</div>
+                                            <small class="text-muted">MSE</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="h5" style="color: #ff0000;">${rmse.toFixed(2)}</div>
+                                            <small class="text-muted">RMSE</small>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-light">
+                                        <small>
+                                            <strong>MAE:</strong> Ortalama Mutlak Hata - Gerçek ve tahmin değerleri arasındaki mutlak farkların ortalaması<br>
+                                            <strong>MSE:</strong> Ortalama Kare Hata - Hataların karelerinin ortalaması<br>
+                                            <strong>RMSE:</strong> Kök Ortalama Kare Hata - MSE'nin karekökü, orijinal birimde hata
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <!-- Performans Analizi -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 style="color: #ff0000;"><i class="fas fa-analytics me-2"></i>Performans Analizi</h6>
+                                    <div class="alert" style="background-color: #ffe6e6; border-color: #ff9999;">
+                                        <div class="row">
+                                            <div class="col-md-3 text-center">
+                                                <div class="h5 text-success">${r2Percentage}%</div>
+                                                <small class="text-muted">Açıklama Gücü</small>
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <div class="h5 ${mae < 100 ? 'text-success' : mae < 500 ? 'text-warning' : 'text-danger'}">${mae < 100 ? 'İyi' : mae < 500 ? 'Orta' : 'Zayıf'}</div>
+                                                <small class="text-muted">Hata Seviyesi</small>
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <div class="h5 ${features.length >= 5 ? 'text-success' : features.length >= 3 ? 'text-warning' : 'text-danger'}">${features.length >= 5 ? 'Zengin' : features.length >= 3 ? 'Yeterli' : 'Az'}</div>
+                                                <small class="text-muted">Özellik Zenginliği</small>
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <div class="h5 text-primary">${r2Score > 0.8 ? 'A' : r2Score > 0.6 ? 'B' : 'C'}</div>
+                                                <small class="text-muted">Genel Not</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Kapat
+                            </button>
+                            <button type="button" class="btn btn-danger me-2" onclick="deleteModel('${modelId}')">
+                                <i class="fas fa-trash me-2"></i>Modeli Sil
+                            </button>
+                            <form method="POST" action="/make-prediction-new" style="display: inline;">
+                                <input type="hidden" name="model_id" value="${modelId}">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-magic me-2"></i>Bu Modelle Tahmin Yap
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('modelDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('Model details error:', error);
+        alert('Model detayları gösterilirken hata oluştu: ' + error.message);
+    }
+}
+
+// Initialize accordion functionality for expandable model details
+function initializeAccordion() {
+    const accordionButtons = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    
+    accordionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const target = document.querySelector(this.getAttribute('data-bs-target'));
+            if (target) {
+                target.addEventListener('shown.bs.collapse', function() {
+                    this.querySelector('.card-body').style.maxHeight = 'none';
+                });
+            }
+        });
+    });
+}
+
 function initializeCharts(chartData) {
     // Prediction Line Chart
     const ctx1 = document.getElementById('predictionChart').getContext('2d');
@@ -8,7 +216,7 @@ function initializeCharts(chartData) {
         data: {
             labels: chartData.dates,
             datasets: [{
-                label: 'Tahmin Edilen Satış',
+                label: 'Tahmin Edilen Değer',
                 data: chartData.predictions,
                 borderColor: 'rgb(75, 192, 192)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -21,7 +229,7 @@ function initializeCharts(chartData) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Aylık Satış Tahminleri'
+                    text: 'Aylık Tahminler'
                 }
             },
             scales: {
@@ -261,7 +469,7 @@ function exportToExcel() {
             {wch: 10}  // Trend
         ];
         
-        XLSX.utils.book_append_sheet(wb, ws, "Satış Tahminleri");
+        XLSX.utils.book_append_sheet(wb, ws, "Tahminler");
         
         // Save file
         XLSX.writeFile(wb, `satis_tahminleri_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -295,7 +503,7 @@ function generateReport() {
     
     // Title
     doc.setFontSize(20);
-    doc.text('Satış Tahmin Raporu', 20, 30);
+    doc.text('Tahmin Raporu', 20, 30);
     
     // Date
     doc.setFontSize(12);
@@ -319,8 +527,8 @@ function generateReport() {
     doc.setFontSize(12);
     
     const insights = [
-        'En yüksek satış: Mart 2024\'te bekleniyor',
-        'Düşük performans: Yaz aylarında satışlarda azalma',
+        'En yüksek değer: Mart 2024\'te bekleniyor',
+        'Düşük performans: Yaz aylarında değerlerde azalma',
         'Genel trend: %12 yıllık büyüme beklentisi',
         'Önerilen aksiyon: Q2\'de promosyon kampanyaları'
     ];
@@ -410,4 +618,56 @@ function refreshPredictions() {
             Utils.hideLoading();
         }
     });
+}
+
+// Model silme fonksiyonu
+function deleteModel(modelId) {
+    // Onay dialog'u göster
+    if (!confirm('Bu modeli silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Model veritabanından ve dosya sisteminden tamamen kaldırılacaktır.')) {
+        return;
+    }
+    
+    try {
+        // Loading göster (eğer Utils varsa)
+        if (typeof Utils !== 'undefined') {
+            Utils.showLoading('Model siliniyor...');
+        }
+        
+        // Form oluştur ve submit et
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete-model/${modelId}`;
+        form.style.display = 'none';
+        
+        // CSRF token varsa ekle (Flask-WTF için)
+        const csrfToken = document.querySelector('meta[name=csrf-token]');
+        if (csrfToken) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'csrf_token';
+            tokenInput.value = csrfToken.getAttribute('content');
+            form.appendChild(tokenInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Modal'ı kapat
+        const modal = document.getElementById('modelDetailsModal');
+        if (modal) {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+        
+    } catch (error) {
+        console.error('Model silme hatası:', error);
+        alert('Model silinirken hata oluştu: ' + error.message);
+        
+        // Loading'i gizle
+        if (typeof Utils !== 'undefined') {
+            Utils.hideLoading();
+        }
+    }
 }

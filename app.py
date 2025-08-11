@@ -32,6 +32,18 @@ def create_app(config_name='default'):
         from flask import session
         return dict(session=session)
     
+    # JSON filter ekleme
+    @app.template_filter('from_json')
+    def from_json_filter(value):
+        """JSON string'i Python objesine çevirir"""
+        import json
+        try:
+            if isinstance(value, str):
+                return json.loads(value)
+            return value
+        except:
+            return []
+    
     return app
 
 def get_config_name():

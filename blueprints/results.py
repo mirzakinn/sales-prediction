@@ -8,6 +8,8 @@ import os
 import pandas as pd
 from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
 from utils.ml_utils import *
+from database.crud import *
+from utils.file_utils import save_model_files, allowed_file
 
 results_bp = Blueprint('results', __name__)
 
@@ -16,20 +18,8 @@ def results():
     """
     Sonuçlar sayfası - eğitilmiş modellerin listesi
     """
-    # TODO: Burada gerçek eğitilmiş modelleri veritabanından veya dosyadan alabilirsiniz
-    # Şimdilik örnek veriler gösteriyoruz
-    model_results = [
-        {
-            'model_name': 'Linear Regression',
-            'r2_score': 0.852,
-            'mae': 1250.75,
-            'mse': 2500000,
-            'dataset': 'sales_data.csv',
-            'target_column': 'sales',
-            'features': ['price', 'marketing_spend'],
-            'trained_date': '2024-01-15'
-        }
-    ]
+
+    model_results = get_all_models()
     
     return render_template('results_new.html', results=model_results)
 
@@ -107,6 +97,7 @@ def select_columns(filename):
 def configure_model():
     """
     Model konfigürasyonu - kullanıcının seçtiği kolonlara göre model ayarları
+    Prediction mode'da model eğitimi yapmaz, direkt tahmin yapar
     """
     if request.method == 'GET':
         # GET isteği - sayfa yenilendiğinde veya doğrudan erişimde
@@ -151,7 +142,7 @@ def configure_model():
         session['target_column'] = target_column
         session['feature_columns'] = feature_columns
         
-        # Veri ön işleme için gerekli bilgileri hazırla
+        # NORMAL MODE: Veri ön işleme için gerekli bilgileri hazırla
         filename = session.get('current_file')
         filepath = os.path.join('uploads', filename)
         df = pd.read_csv(filepath)
@@ -227,12 +218,6 @@ def train_model():
         # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
         model_performance = analyze_model(y_test, y_pred)
         
-        # Global değişkenlere model objelerini kaydet
-        global CURRENT_MODEL, CURRENT_ENCODERS, CURRENT_SCALER
-        CURRENT_MODEL = reg
-        CURRENT_ENCODERS = encoders
-        CURRENT_SCALER = scaler
-        
         # Model bilgilerini session'a kaydet
         session['trained_model'] = {
             'filename': filename,
@@ -245,7 +230,29 @@ def train_model():
             'trained_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')  # String'e çevir
         }
 
-        #
+        model_id = save_trained_model(
+            model_name="Model",
+            algorithm=model_type,
+            r2_score=model_performance["r2_score"],
+            mae=model_performance["mae"],
+            mse=model_performance["mse"],
+            rmse=model_performance["rmse"],
+            target_column=target_column,
+            feature_columns=feature_columns
+        )
+
+        print(f"Model database'e kaydedildi. ID: {model_id}")
+
+        
+        # Model dosyalarını kaydet
+        file_paths = save_model_files(
+            model_id=model_id,
+            model_obj=CURRENT_MODEL,
+            encoders_obj=CURRENT_ENCODERS,
+            scaler_obj=CURRENT_SCALER
+        )
+        print(f"Model dosyaları kaydedildi: {file_paths}")
+        
         print(f"Model Performance: {model_performance}")  # Debug için
         flash(f'Model eğitildi! R² Score: {model_performance["r2_score"]:.3f}', 'success')
         
@@ -257,8 +264,6 @@ def train_model():
     except Exception as e:
         flash(f'Model eğitimi hatası: {str(e)}', 'error')
         return redirect(url_for('results.configure_model'))
-    
-    return render_template('train_model.html', uploaded_files=uploaded_files)
 
 @results_bp.route('/make-prediction', methods=['GET', 'POST'])
 def make_prediction():
@@ -287,38 +292,51 @@ def make_prediction():
                     flash(f'{feature} alanı boş bırakılamaz!', 'error')
                     return redirect(url_for('results.make_prediction'))
             
-            # TODO: Buraya gerçek tahmin kodunu yazabilirsiniz
-            # model = joblib.load(f"models/{trained_model['filename']}_{trained_model['model_type']}.pkl")
-            # prediction = model.predict([list(prediction_data.values())])[0]
+            # PREDICTION MODE: Seçilen modeli kullan
+            prediction_model = session.get('prediction_model')
             
-            # Global değişkenlerden model objelerini al
-            global CURRENT_MODEL, CURRENT_ENCODERS, CURRENT_SCALER
+            if not prediction_model:
+                flash('Tahmin modeli bulunamadı!', 'error')
+                return redirect(url_for('results.results'))
             
-            if CURRENT_MODEL is None:
-                flash('Model bulunamadı! Lütfen modeli yeniden eğitin.', 'error')
-                return redirect(url_for('upload.upload_file'))
+            # Model dosyalarını yükle
+            from utils.file_utils import load_model_files
+            model_objects = load_model_files(prediction_model['id'])
+            
+            if not model_objects:
+                flash('Model dosyaları yüklenemedi!', 'error')
+                return redirect(url_for('results.results'))
             
             # Kullanıcı verisini DataFrame'e çevir
             input_df = pd.DataFrame([prediction_data])
             
-            # Kategorik kolonları encode et (eğitimde olduğu gibi)
+            # Kategorik kolonları encode et
+            encoders = model_objects['encoders']
             for col in input_df.columns:
-                if col in CURRENT_ENCODERS:
-                    # String'e çevir ve encode et
-                    input_df[col] = CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
+                if col in encoders:
+                    try:
+                        input_df[col] = encoders[col].transform([str(prediction_data[col])])[0]
+                    except:
+                        # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
+                        most_common = encoders[col].classes_[0]
+                        input_df[col] = encoders[col].transform([most_common])[0]
             
             # Feature'ları doğru sırayla al ve scale et
             feature_values = input_df[trained_model['feature_columns']].values
-            input_scaled = CURRENT_SCALER.transform(feature_values)
+            scaler = model_objects['scaler']
+            input_scaled = scaler.transform(feature_values)
             
-            # Gerçek tahmin yap
-            prediction = CURRENT_MODEL.predict(input_scaled)[0]
+            # Tahmin yap
+            model = model_objects['model']
+            prediction = model.predict(input_scaled)[0]
             
-            # Şimdilik örnek tahmin (siz gerçek kodu yazacaksınız)
-            example_prediction = prediction  # Artık gerçek tahmin!
+            # Session'ı temizle
+            session.pop('prediction_mode_active', None)
+            session.pop('prediction_mode', None)
             
+            # Sonucu göster
             return render_template('prediction_result.html',
-                                 prediction=round(example_prediction, 2),
+                                 prediction=round(prediction, 2),
                                  input_data=prediction_data,
                                  model_info=trained_model)
             
@@ -331,6 +349,108 @@ def make_prediction():
                          model_info=trained_model,
                          feature_columns=trained_model['feature_columns'])
 
+@results_bp.route('/make-prediction-new', methods=['GET', 'POST'])
+def make_prediction_new():
+    """
+    Yeni tahmin sayfası - seçili modelle direkt tahmin yapar
+    Veri yükleme ve kolon seçme adımlarını atlar
+    """
+    print("🔥 make_prediction_new route called!")
+    print(f"Request method: {request.method}")
+    
+    if request.method == 'POST':
+        print("🔥 POST request received!")
+        print(f"Form data: {request.form.to_dict()}")
+        
+        try:
+            # Form'dan model ID'sini al
+            model_id = request.form.get('model_id')
+            
+            if not model_id:
+                flash('Model ID eksik!', 'error')
+                return redirect(url_for('results.results'))
+            
+            # Database'den model bilgilerini al
+            model_info = get_model_by_id(int(model_id))
+            
+            if not model_info:
+                flash('Model veritabanında bulunamadı!', 'error')
+                return redirect(url_for('results.results'))
+            
+            # Debug: feature_columns'u kontrol et
+            print(f"Raw feature_columns: {model_info['feature_columns']}")
+            print(f"Type: {type(model_info['feature_columns'])}")
+            
+            # Feature kolonlarını güvenli şekilde parse et
+            feature_columns_raw = model_info['feature_columns']
+            
+            # Farklı formatları handle et
+            if isinstance(feature_columns_raw, list):
+                feature_columns = feature_columns_raw
+            elif isinstance(feature_columns_raw, str):
+                # Python liste string'i ise (örn: "['col1', 'col2']")
+                if (feature_columns_raw.startswith('[') and feature_columns_raw.endswith(']')):
+                    try:
+                        # Önce JSON olarak dene
+                        feature_columns = json.loads(feature_columns_raw)
+                    except json.JSONDecodeError:
+                        # JSON başarısız olursa literal_eval kullan
+                        import ast
+                        feature_columns = ast.literal_eval(feature_columns_raw)
+                else:
+                    # Tek string ise listeye çevir
+                    feature_columns = [feature_columns_raw]
+            else:
+                feature_columns = []
+            
+            print(f"Parsed feature_columns: {feature_columns}")
+            
+            # Model bilgilerini hazırla (make_prediction template'i için)
+            model_info_for_template = {
+                'model_type': model_info['model_type'],
+                'filename': 'Seçilen Model',
+                'target_column': model_info['target_column'],
+                'feature_columns': feature_columns,
+                'performance': {
+                    'accuracy': round(model_info['r2_score'] * 100, 1) if model_info['r2_score'] else 0,
+                    'r2_score': model_info['r2_score']
+                }
+            }
+            
+            # Model bilgilerini session'a kaydet (tahmin için)
+            session['prediction_model'] = {
+                'id': model_info['id'],
+                'model_type': model_info['model_type'],
+                'target_column': model_info['target_column'], 
+                'feature_columns': feature_columns,
+                'r2_score': model_info['r2_score'],
+                'mae': model_info['mae'],
+                'rmse': model_info['rmse'],
+                'created_at': model_info['created_at']
+            }
+            
+            # Session'a trained_model bilgilerini kaydet ve prediction mode'u aktif et
+            session['trained_model'] = model_info_for_template
+            session['prediction_mode_active'] = True
+            
+            # Direkt tahmin sayfasına git
+            flash(f'{model_info["model_type"].title()} modeli ile tahmin yapabilirsiniz.', 'success')
+            return render_template('make_prediction.html', 
+                                 model_info=model_info_for_template,
+                                 feature_columns=feature_columns)
+                                 
+        except Exception as e:
+            print(f"Make prediction new hatası: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Model yükleme hatası: {str(e)}', 'error')
+            return redirect(url_for('results.results'))
+    
+    else:
+        # GET request - model seçilmeden gelindiyse
+        flash('Önce bir model seçmelisiniz!', 'error') 
+        return redirect(url_for('results.results'))
+
 @results_bp.route('/clear-session')
 def clear_session():
     """
@@ -339,3 +459,49 @@ def clear_session():
     session.clear()
     flash('Oturum temizlendi. Yeni bir analiz başlatabilirsiniz.', 'info')
     return redirect(url_for('main.index'))
+
+@results_bp.route('/delete-model/<int:model_id>', methods=['POST'])
+def delete_model_route(model_id):
+    """
+    Model silme işlemi - Database'den ve dosya sisteminden siler
+    """
+    try:
+        # Database'den model bilgilerini al (silmeden önce kontrol için)
+        model = get_model_by_id(model_id)
+        
+        if not model:
+            flash('Model bulunamadı!', 'error')
+            return redirect(url_for('results.results'))
+        
+        # Database'den modeli sil
+        delete_model(model_id)
+        
+        # Model dosyalarını da sil
+        import os
+        from pathlib import Path
+        
+        base_path = Path(__file__).parent.parent / 'storage'
+        
+        files_to_delete = [
+            base_path / 'models' / f'model_{model_id}.pkl',
+            base_path / 'encoders' / f'encoder_{model_id}.pkl',
+            base_path / 'scalers' / f'scaler_{model_id}.pkl'
+        ]
+        
+        # Dosyaları sil (varsa)
+        deleted_files = []
+        for file_path in files_to_delete:
+            if file_path.exists():
+                os.remove(file_path)
+                deleted_files.append(file_path.name)
+        
+        print(f"Model silindi - ID: {model_id}")
+        print(f"Silinen dosyalar: {deleted_files}")
+        
+        flash(f'Model başarıyla silindi! (ID: {model_id})', 'success')
+        return redirect(url_for('results.results'))
+        
+    except Exception as e:
+        print(f"Model silme hatası: {e}")
+        flash(f'Model silinirken hata oluştu: {str(e)}', 'error')
+        return redirect(url_for('results.results'))

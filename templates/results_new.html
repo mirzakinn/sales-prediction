@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sonuçlar - Satış Tahmin{% endblock %}
+{% block title %}Sonuçlar - Tahmin{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -25,39 +25,25 @@
                         <div class="card-header bg-primary text-white">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-robot"></i>
-                                {{ model.model_name }}
+                                {{ model.model_type|title }}
                             </h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><strong>Veri Dosyası:</strong><br>{{ model.dataset }}</p>
+                                    <p><strong>Veri Dosyası:</strong><br>{{ model.dataset_filename }}</p>
                                     <p><strong>Hedef Kolon:</strong><br>
-                                        <span class="badge bg-primary text-white">{{ model.target_column }}</span>
+                                        <span class="badge text-white" style="background-color: #ff0000;">{{ model.target_column }}</span>
                                     </p>
-                                    <p><strong>Eğitim Tarihi:</strong><br>{{ model.trained_date }}</p>
+                                    <p><strong>Eğitim Tarihi:</strong><br>{{ model.created_at }}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="text-center">
-                                        <div class="mb-3">
+                                    <div class="d-flex justify-content-center align-items-center h-100">
+                                        <div class="text-center">
                                             <div class="h4 text-success font-weight-bold mb-1">
-                                                R² Score: {{ model.r2_score|round(3) }}
+                                                R² Score: {{ (model.r2_score * 100)|round(1) }}%
                                             </div>
                                             <small class="text-muted">Açıklama Gücü</small>
-                                        </div>
-                                        <div class="row text-center">
-                                            <div class="col-6">
-                                                <div class="small text-info font-weight-bold">
-                                                    MAE: {{ model.mae|round(2) }}
-                                                </div>
-                                                <small class="text-muted">Ort. Mutlak Hata</small>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="small text-warning font-weight-bold">
-                                                    MSE: {{ model.mse|round(2) }}
-                                                </div>
-                                                <small class="text-muted">Ort. Kare Hata</small>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -65,19 +51,34 @@
                             
                             <div class="mt-3">
                                 <strong>Kullanılan Özellikler:</strong><br>
-                                {% for feature in model.features %}
-                                <span class="badge bg-secondary text-white me-1 mb-1">{{ feature }}</span>
-                                {% endfor %}
+                                {% if model.feature_columns %}
+                                    {% set features = model.feature_columns|from_json if model.feature_columns is string else model.feature_columns %}
+                                    {% for feature in features %}
+                                    <span class="badge bg-secondary text-white me-1 mb-1">{{ feature }}</span>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
                         <div class="card-footer bg-light">
                             <div class="d-flex justify-content-between">
-                                <button class="btn btn-outline-info btn-sm" disabled>
+                                <button class="btn btn-outline-info btn-sm model-detail-btn"
+                                        data-model-id="{{ model.id }}"
+                                        data-model-type="{{ model.model_type }}"
+                                        data-target-column="{{ model.target_column }}"
+                                        data-r2-score="{{ model.r2_score }}"
+                                        data-mae="{{ model.mae }}"
+                                        data-mse="{{ model.mse }}"
+                                        data-rmse="{{ model.rmse }}"
+                                        data-created-at="{{ model.created_at }}"
+                                        data-features="{{ model.feature_columns }}">
                                     <i class="fas fa-eye"></i> Detayları Gör
                                 </button>
-                                <button class="btn btn-outline-success btn-sm" disabled>
-                                    <i class="fas fa-magic"></i> Bu Modelle Tahmin Yap
-                                </button>
+                                <form method="POST" action="{{ url_for('results.make_prediction_new') }}" style="display: inline;">
+                                    <input type="hidden" name="model_id" value="{{ model.id }}">
+                                    <button type="submit" class="btn btn-outline-success btn-sm prediction-btn">
+                                        <i class="fas fa-magic"></i> Bu Modelle Tahmin Yap
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -127,4 +128,7 @@
         </div>
     </div>
 </div>
+
+<!-- JavaScript -->
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
 {% endblock %}

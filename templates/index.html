@@ -6,11 +6,11 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <h1 class="display-4 fw-bold mb-4">
-                Satış Tahmin Sistemi
+                Tahmin Sistemi
             </h1>
             <p class="lead mb-4">
                 Excel dosyalarınızı yükleyerek gelişmiş makine öğrenmesi algoritmaları ile 
-                satış tahminleri yapın ve işletmenizin geleceğini planlayın.
+                tahminleri yapın ve işletmenizin geleceğini planlayın.
             </p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
                 <!-- 1. Veri Yükle - Her zaman aktif -->
@@ -31,7 +31,7 @@
                 
                 <!-- 3. Model Eğit - Kolonlar seçildiyse aktif -->
                 {% if session.get('target_column') and session.get('feature_columns') %}
-                <a href="#" onclick="$('#configure-model-form').submit(); return false;" class="btn btn-warning btn-lg">
+                <a href="{{ url_for('results.configure_model') }}" class="btn btn-warning btn-lg">
                     <i class="fas fa-brain me-2"></i>3. Model Eğit
                 </a>
                 {% else %}
@@ -51,21 +51,11 @@
                 </a>
                 {% endif %}
                 
-                <!-- Sonuçları Gör - Her zaman aktif -->
+                <!-- Önceki Sonuçlar ve Eğitilmiş Modeller - Her zaman aktif -->
                 <a href="{{ url_for('results.results') }}" class="btn btn-outline-primary btn-lg text-danger border-3 fw-bold" style="background-color: #f8f9fa;">
-                    <i class="fas fa-chart-bar me-2"></i>Sonuçları Gör
+                    <i class="fas fa-chart-bar me-2"></i>Önceki Sonuçlar ve Eğitilmiş Modeller
                 </a>
             </div>
-            
-            <!-- Gizli form - Model eğitimi için -->
-            {% if session.get('target_column') and session.get('feature_columns') %}
-            <form id="configure-model-form" method="POST" action="{{ url_for('results.configure_model') }}" style="display: none;">
-                <input type="hidden" name="target_column" value="{{ session.get('target_column') }}">
-                {% for feature in session.get('feature_columns', []) %}
-                <input type="hidden" name="feature_columns" value="{{ feature }}">
-                {% endfor %}
-            </form>
-            {% endif %}
             
             <!-- Workflow Durumu -->
             {% if session.get('current_file') or session.get('target_column') or session.get('trained_model') %}
@@ -114,7 +104,7 @@
             </div>
             <h4>Excel Dosyası Yükleme</h4>
             <p class="text-muted">
-                XLSX, XLS ve CSV formatlarındaki satış verilerinizi kolayca yükleyin ve analiz edin.
+                XLSX, XLS ve CSV formatlarındaki verilerinizi kolayca yükleyin ve analiz edin.
             </p>
         </div>
     </div>
@@ -125,7 +115,7 @@
             </div>
             <h4>Akıllı Tahmin</h4>
             <p class="text-muted">
-                Makine öğrenmesi algoritmaları ile geçmiş verilerinizden gelecek satış tahminleri üretin.
+                Makine öğrenmesi algoritmaları ile geçmiş verilerinizden gelecek tahminleri üretin.
             </p>
         </div>
     </div>
@@ -195,7 +185,7 @@
         <div class="col-md-3 text-center mb-4">
             <div class="step-number">4</div>
             <h5>Tahmin Üret</h5>
-            <p class="text-muted">Gelecek satış tahminlerinizi görüntüleyin</p>
+            <p class="text-muted">Gelecek tahminlerinizi görüntüleyin</p>
         </div>
     </div>
 </div>
@@ -203,7 +193,7 @@
 <!-- Call to Action -->
 <div class="cta-section text-center text-white rounded p-4" style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); box-shadow: 0 0.5rem 1rem rgba(255, 0, 0, 0.3);">
     <h4 class="mb-3 fw-bold">Hemen Başlayın!</h4>
-    <p class="mb-3">Satış verilerinizi yükleyerek gelecek planlamanızı bugün başlatın.</p>
+    <p class="mb-3">Verilerinizi yükleyerek gelecek planlamanızı bugün başlatın.</p>
     <a href="{{ url_for('upload.upload_file') }}" class="btn btn-light fw-bold border-2" style="color: #ff0000; border-color: #ff0000;">
         <i class="fas fa-rocket me-2"></i>Şimdi Başla
     </a>

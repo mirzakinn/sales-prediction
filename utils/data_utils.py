@@ -8,16 +8,7 @@ import numpy as np
 def analyze_dataframe(df, filename):
     """
     DataFrame'i analiz eder ve detayları yazdırır
-    
-    TODO: Buraya kendi veri analizi kodunuzu yazabilirsiniz
-    Örneğin:
-    - Eksik veri kontrolü
-    - Veri tipleri analizi
-    - İstatistiksel özetler
-    - Korelasyon analizi
-    - Outlier tespiti
     """
-
     print("=" * 50, flush=True)
     print("📊 VERİ ANALİZİ BAŞLADI", flush=True)
     print("=" * 50, flush=True)
@@ -25,14 +16,20 @@ def analyze_dataframe(df, filename):
     print(f"📏 Veri boyutu: {df.shape[0]} satır, {df.shape[1]} sütun", flush=True)
     print(f"📋 Sütunlar: {list(df.columns)}", flush=True)
     
-    # TODO: Buraya kendi analiz kodlarınızı ekleyin
+    # Sayısal kolonlar için temel istatistikler
     numeric_columns = df.select_dtypes(include=['number']).columns
+    if len(numeric_columns) > 0:
+        print(f"🔢 Sayısal kolonlar: {list(numeric_columns)}", flush=True)
     
-    for col in numeric_columns:
-        mean_val = df[col].mean()
-        std_val = df[col].std()
-        min_val = df[col].min()
-        max_val = df[col].max()
+    # Eksik veri kontrolü
+    missing_data = df.isnull().sum()
+    if missing_data.any():
+        print("⚠️ Eksik veriler:", flush=True)
+        for col, count in missing_data.items():
+            if count > 0:
+                print(f"   {col}: {count} eksik", flush=True)
+    
+    print("=" * 50, flush=True)
 
 def read_file_by_extension(filepath, filename):
     """Dosya uzantısına göre dosyayı okur ve hata yönetimi yapar"""

@@ -97,4 +97,5 @@ def analyze_model(y_test, y_pred):
         'rmse': rmse,
         'mae': mae,
         'r2_score': r2,
+        'accuracy': round(r2 * 100, 1)  # R² skorunu yüzdelik accuracy olarak ekle
     }

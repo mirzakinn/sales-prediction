@@ -1,7 +1,7 @@
 // Main JavaScript functionality
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Satış Tahmin Sistemi yüklendi');
+    console.log('Tahmin Sistemi yüklendi');
     
     // Initialize tooltips
     initializeTooltips();
@@ -331,31 +331,6 @@ window.clearFile = function() {
     FileUpload.clearFile();
 };
 
-window.showDetails = function(date, prediction) {
-    // Bu fonksiyon results.html'de kullanılıyor
-    const modalContent = document.getElementById('modalContent');
-    if (modalContent) {
-        modalContent.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Dönem Bilgileri</h6>
-                    <p><strong>Tarih:</strong> ${date}</p>
-                    <p><strong>Tahmin:</strong> ${Utils.formatNumber(prediction)} TL</p>
-                    <p><strong>Güven Aralığı:</strong> %85</p>
-                </div>
-                <div class="col-md-6">
-                    <h6>Algoritma Detayları</h6>
-                    <p><strong>Model:</strong> Random Forest</p>
-                    <p><strong>R² Score:</strong> 0.92</p>
-                    <p><strong>RMSE:</strong> 15.3</p>
-                </div>
-            </div>
-        `;
-        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
-        modal.show();
-    }
-};
-
 // Console welcome message
-console.log('%c Satış Tahmin Sistemi ', 'background: #0d6efd; color: white; font-size: 16px; padding: 5px;');
+console.log('%c Tahmin Sistemi ', 'background: #0d6efd; color: white; font-size: 16px; padding: 5px;');
 console.log('Sistem başarıyla yüklendi. Geliştirici araçları aktif.');

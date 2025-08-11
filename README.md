@@ -1,6 +1,6 @@
-# Satış Tahmin Sistemi
+# Tahmin Sistemi
 
-Bu proje, kullanıcıların CSV/Excel dosyalarını yükleyerek makine öğrenmesi modelleri ile satış tahminleri yapabilecekleri web tabanlı bir uygulamadır. Flask framework'ü kullanılarak geliştirilmiş, Blueprint mimarisi ile modüler yapıda tasarlanmıştır.
+Bu proje, kullanıcıların CSV/Excel dosyalarını yükleyerek makine öğrenmesi modelleri ile tahminler yapabilecekleri web tabanlı bir uygulamadır. Flask framework'ü kullanılarak geliştirilmiş, Blueprint mimarisi ile modüler yapıda tasarlanmıştır.
 
 ## ✨ Özellikler
 
@@ -15,7 +15,7 @@ Bu proje, kullanıcıların CSV/Excel dosyalarını yükleyerek makine öğrenme
 ## 🏗️ Teknik Mimari
 
 ```
-sales-prediction/
+tahmin-sistemi/
 │
 ├── app.py                 # Ana Flask uygulaması
 ├── config.py             # Uygulama konfigürasyonu
@@ -60,8 +60,8 @@ sales-prediction/
 ### Kurulum
 1. Projeyi klonlayın:
 ```bash
-git clone https://github.com/mirzakinn/sales-prediction.git
-cd sales-prediction
+git clone https://github.com/mirzakinn/tahmin-sistemi.git
+cd tahmin-sistemi
 ```
 
 2. Virtual environment oluşturun:

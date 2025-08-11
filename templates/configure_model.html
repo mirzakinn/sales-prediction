@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Model Konfigürasyonu - Satış Tahmin{% endblock %}
+{% block title %}Model Ayarları - Tahmin{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -41,6 +41,32 @@
                     </div>
 
                     <!-- Model Ayarları Formu -->
+                    {% if prediction_mode %}
+                    <!-- PREDICTION MODE: Model eğitimi yok, sadece devam et -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Tahmin Modu</h6>
+                        <p>Mevcut eğitilmiş model kullanılacak. Yeni model eğitimi yapılmayacak.</p>
+                        <p><strong>Model:</strong> {{ session.prediction_model.model_type|title if session.prediction_model else 'Bilinmiyor' }}</p>
+                    </div>
+                    
+                    <form method="POST">
+                        <!-- Butonlar -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('results.select_columns', filename=filename) }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Geri
+                                    </a>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-calculator"></i> Tahmin Yap
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    {% else %}
+                    <!-- NORMAL MODE: Model eğitimi -->
                     <form method="POST" action="{{ url_for('results.train_model') }}">
                         <div class="row">
                             <!-- Model Türü -->
@@ -135,6 +161,7 @@
                             </div>
                         </div>
                     </form>
+                    {% endif %}
 
                 </div>
             </div>
