@@ -79,6 +79,7 @@
                                     <select name="model_type" id="model_type" class="form-control" required>
                                         <option value="linear_regression">Linear Regression</option>
                                         <option value="ridge">Ridge Regression</option>
+                                        <option value="lasso">Lasso Regression</option>
                                         <option value="random_forest">Random Forest</option>
                                         <option value="xgboost">XGBoost</option>
                                         <option value="decision_tree">Decision Tree</option>
@@ -127,21 +128,35 @@
                         </div>
 
                         <!-- Model Parametreleri (Dinamik) -->
+                        <div class="row">
                             <div class="col-md-4" id="model-params-container">
                                 <!-- Ridge Alpha Parametresi -->
                                 <div class="form-group" id="ridge-alpha-param" style="display: none;">
-                                    <label for="alpha">
+                                    <label for="ridge_alpha_input">
                                         <i class="fas fa-sliders-h"></i>
                                         Alpha (Düzenleme Katsayısı)
                                     </label>
-                                    <input type="number" name="alpha" id="alpha" class="form-control" 
-                                           value="1.0" min="0.001" max="100" step="0.1">
+                                    <input type="number" name="" id="ridge_alpha_input" class="form-control" 
+                                           value="1.0" min="0.001" max="100" step="0.1" disabled>
                                     <small class="form-text text-muted">
                                         Düşük değer (0.1): Az düzenleme, yüksek değer (10): Çok düzenleme
                                     </small>
                                 </div>
+                                
+                                <!-- Lasso Alpha Parametresi -->
+                                <div class="form-group" id="lasso-alpha-param" style="display: none;">
+                                    <label for="lasso_alpha_input">
+                                        <i class="fas fa-sliders-h"></i>
+                                        Alpha (L1 Düzenleme Katsayısı)
+                                    </label>
+                                    <input type="number" name="" id="lasso_alpha_input" class="form-control" 
+                                           value="1.0" min="0.001" max="100" step="0.1" disabled>
+                                    <small class="form-text text-muted">
+                                        Düşük değer (0.01): Zayıf feature seçimi, yüksek değer (10): Güçlü feature seçimi
+                                    </small>
+                                </div>
                             </div>
-
+                        </div>
 
                         <!-- Eksik Veri Uyarısı -->
                         {% set has_missing = false %}
@@ -192,7 +207,8 @@
 document.getElementById('model_type').addEventListener('change', function() {
     const modelInfo = {
         'linear_regression': 'Basit ve hızlı. Doğrusal ilişkiler için uygun.',
-        'ridge': 'Linear regression + düzenleme. Overfitting\'i önler.',
+        'ridge': 'Linear regression + L2 düzenleme. Overfitting\'i önler.',
+        'lasso': 'Linear regression + L1 düzenleme. Feature seçimi yapar.',
         'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
         'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
         'decision_tree': 'Anlaşılması kolay ama bazen kararsız.'
@@ -205,20 +221,51 @@ document.getElementById('model_type').addEventListener('change', function() {
     
     // Model parametrelerini göster/gizle
     const ridgeAlphaParam = document.getElementById('ridge-alpha-param');
+    const lassoAlphaParam = document.getElementById('lasso-alpha-param');
+    const ridgeInput = document.getElementById('ridge_alpha_input');
+    const lassoInput = document.getElementById('lasso_alpha_input');
     
-    // Tüm parametreleri gizle
+    // Tüm parametreleri gizle ve devre dışı bırak
     ridgeAlphaParam.style.display = 'none';
+    lassoAlphaParam.style.display = 'none';
+    ridgeInput.name = '';
+    lassoInput.name = '';
+    ridgeInput.disabled = true;
+    lassoInput.disabled = true;
     
-    // Seçili modele göre parametreleri göster
+    // Seçili modele göre parametreleri göster ve aktif et
     if (selectedModel === 'ridge') {
         ridgeAlphaParam.style.display = 'block';
+        ridgeInput.name = 'alpha';
+        ridgeInput.disabled = false;
+    } else if (selectedModel === 'lasso') {
+        lassoAlphaParam.style.display = 'block';
+        lassoInput.name = 'alpha';
+        lassoInput.disabled = false;
     }
 });
 
 // Sayfa yüklendiğinde mevcut seçimi kontrol et
 document.addEventListener('DOMContentLoaded', function() {
     const modelSelect = document.getElementById('model_type');
-    modelSelect.dispatchEvent(new Event('change'));
+    if (modelSelect) {
+        modelSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Form submit debug
+    const trainForm = document.querySelector('form[action*="train_model"]');
+    if (trainForm) {
+        console.log('✅ Train model formu bulundu!');
+        trainForm.addEventListener('submit', function(e) {
+            console.log('🚀 Form submit edildi!');
+        });
+    } else {
+        console.log('❌ Train model formu bulunamadı!');
+        console.log('Mevcut formlar:', document.querySelectorAll('form'));
+    }
+    
+    // Prediction mode kontrol
+    console.log('Prediction mode aktif mi?', {% if prediction_mode %}true{% else %}false{% endif %});
 });
 </script>
 {% endblock %}

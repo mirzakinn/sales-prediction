@@ -46,7 +46,8 @@ def configure_model():
                              target_column=target_column,
                              feature_columns=feature_columns,
                              missing_data=missing_data,
-                             total_rows=len(df))
+                             total_rows=len(df),
+                             prediction_mode=False)
     
     # POST isteği - form gönderildiğinde
     try:
@@ -81,7 +82,8 @@ def configure_model():
                              target_column=target_column,
                              feature_columns=feature_columns,
                              missing_data=missing_data,
-                             total_rows=len(df))
+                             total_rows=len(df),
+                             prediction_mode=False)
         
     except Exception as e:
         flash(f'Hata oluştu: {str(e)}', 'error')
@@ -101,7 +103,7 @@ def train_model():
         
         # Model parametrelerini al
         model_params = {}
-        if model_type == 'ridge':
+        if model_type in ['ridge', 'lasso']:
             alpha = request.form.get('alpha', '1.0')
             try:
                 model_params['alpha'] = float(alpha)

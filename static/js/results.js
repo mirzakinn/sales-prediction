@@ -96,7 +96,7 @@ function showModelDetails(modelIndex, cardElement) {
                                     <table class="table table-sm">
                                         <tr><td><strong>Model ID:</strong></td><td><span class="badge" style="background-color: #ff0000;">#${modelId}</span></td></tr>
                                         <tr><td><strong>Model Türü:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelTypeDisplay}</span></td></tr>
-                                        ${modelType === 'ridge' && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
+                                        ${(modelType === 'ridge' || modelType === 'lasso') && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
                                         <tr><td><strong>Veri Dosyası:</strong></td><td>${datasetFilename || 'data.csv'}</td></tr>
                                         <tr><td><strong>Hedef Değişken:</strong></td><td><span class="badge" style="background-color: #ff0000;">${targetColumn}</span></td></tr>
                                         <tr><td><strong>Özellik Değişkenleri:</strong></td><td>
