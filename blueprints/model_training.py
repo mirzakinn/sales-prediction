@@ -110,8 +110,6 @@ def train_model():
             except ValueError:
                 model_params['alpha'] = 1.0  # Default değer
         
-        print(f"Model parametreleri: {model_params}")  # Debug için
-        
         filename = session.get('current_file')
         target_column = session.get('target_column')
         feature_columns = session.get('feature_columns')
@@ -177,8 +175,6 @@ def train_model():
             model_params=model_params
         )
 
-        print(f"Model database'e kaydedildi. ID: {model_id}")
-
         # Model dosyalarını kaydet
         file_paths = save_model_files(
             model_id=model_id,
@@ -186,13 +182,11 @@ def train_model():
             encoders_obj=CURRENT_ENCODERS,
             scaler_obj=CURRENT_SCALER
         )
-        print(f"Model dosyaları kaydedildi: {file_paths}")
-
+        
         # Session'a model ID'sini kaydet (objeler değil)
         session['current_model_id'] = model_id
         session['current_model_ready'] = True
         
-        print(f"Model Performance: {model_performance}")  # Debug için
         flash(f'Model eğitildi! R² Score: {model_performance["r2_score"]:.3f}', 'success')
         
         flash(f'{model_type} modeli başarıyla eğitildi!', 'success')

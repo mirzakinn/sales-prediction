@@ -251,21 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modelSelect) {
         modelSelect.dispatchEvent(new Event('change'));
     }
-    
-    // Form submit debug
-    const trainForm = document.querySelector('form[action*="train_model"]');
-    if (trainForm) {
-        console.log('✅ Train model formu bulundu!');
-        trainForm.addEventListener('submit', function(e) {
-            console.log('🚀 Form submit edildi!');
-        });
-    } else {
-        console.log('❌ Train model formu bulunamadı!');
-        console.log('Mevcut formlar:', document.querySelectorAll('form'));
-    }
-    
-    // Prediction mode kontrol
-    console.log('Prediction mode aktif mi?', {% if prediction_mode %}true{% else %}false{% endif %});
 });
 </script>
 {% endblock %}
