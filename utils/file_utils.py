@@ -79,9 +79,19 @@ def load_model_files(model_id):
         encoder_file = base_path / 'encoders' / f'encoder_{model_id}.pkl'  
         scaler_file = base_path / 'scalers' / f'scaler_{model_id}.pkl'
         
+        print(f"🔍 Model dosyalarını kontrol ediliyor (ID: {model_id})")
+        print(f"   Model file: {model_file} - Exists: {model_file.exists()}")
+        print(f"   Encoder file: {encoder_file} - Exists: {encoder_file.exists()}")
+        print(f"   Scaler file: {scaler_file} - Exists: {scaler_file.exists()}")
+        
         # Dosyaların varlığını kontrol et
         if not all([model_file.exists(), encoder_file.exists(), scaler_file.exists()]):
             print(f"❌ Model dosyaları bulunamadı (ID: {model_id})")
+            missing_files = []
+            if not model_file.exists(): missing_files.append("model")
+            if not encoder_file.exists(): missing_files.append("encoder") 
+            if not scaler_file.exists(): missing_files.append("scaler")
+            print(f"   Eksik dosyalar: {missing_files}")
             return None
         
         # Dosyaları yükle
