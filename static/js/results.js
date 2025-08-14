@@ -97,6 +97,8 @@ function showModelDetails(modelIndex, cardElement) {
                                         <tr><td><strong>Model ID:</strong></td><td><span class="badge" style="background-color: #ff0000;">#${modelId}</span></td></tr>
                                         <tr><td><strong>Model Türü:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelTypeDisplay}</span></td></tr>
                                         ${(modelType === 'ridge' || modelType === 'lasso') && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
+                                        ${modelType === 'elasticnet' && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
+                                        ${modelType === 'elasticnet' && modelParams.l1_ratio !== undefined ? `<tr><td><strong>L1 Ratio:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.l1_ratio}</span></td></tr>` : ''}
                                         <tr><td><strong>Veri Dosyası:</strong></td><td>${datasetFilename || 'data.csv'}</td></tr>
                                         <tr><td><strong>Hedef Değişken:</strong></td><td><span class="badge" style="background-color: #ff0000;">${targetColumn}</span></td></tr>
                                         <tr><td><strong>Özellik Değişkenleri:</strong></td><td>

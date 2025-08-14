@@ -109,6 +109,15 @@ def train_model():
                 model_params['alpha'] = float(alpha)
             except ValueError:
                 model_params['alpha'] = 1.0  # Default değer
+        elif model_type == 'elasticnet':
+            alpha = request.form.get('alpha', '1.0')
+            l1_ratio = request.form.get('l1_ratio', '0.5')
+            try:
+                model_params['alpha'] = float(alpha)
+                model_params['l1_ratio'] = float(l1_ratio)
+            except ValueError:
+                model_params['alpha'] = 1.0
+                model_params['l1_ratio'] = 0.5
         
         filename = session.get('current_file')
         target_column = session.get('target_column')

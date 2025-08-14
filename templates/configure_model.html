@@ -80,6 +80,7 @@
                                         <option value="linear_regression">Linear Regression</option>
                                         <option value="ridge">Ridge Regression</option>
                                         <option value="lasso">Lasso Regression</option>
+                                        <option value="elasticnet">ElasticNet Regression</option>
                                         <option value="random_forest">Random Forest</option>
                                         <option value="xgboost">XGBoost</option>
                                         <option value="decision_tree">Decision Tree</option>
@@ -129,6 +130,7 @@
 
                         <!-- Model Parametreleri (Dinamik) -->
                         <div class="row">
+                            <!-- Alpha Parametresi -->
                             <div class="col-md-4" id="model-params-container">
                                 <!-- Ridge Alpha Parametresi -->
                                 <div class="form-group" id="ridge-alpha-param" style="display: none;">
@@ -153,6 +155,34 @@
                                            value="1.0" min="0.001" max="100" step="0.1" disabled>
                                     <small class="form-text text-muted">
                                         Düşük değer (0.01): Zayıf feature seçimi, yüksek değer (10): Güçlü feature seçimi
+                                    </small>
+                                </div>
+                                
+                                <!-- ElasticNet Alpha Parametresi -->
+                                <div class="form-group" id="elasticnet-alpha-param" style="display: none;">
+                                    <label for="elasticnet_alpha_input">
+                                        <i class="fas fa-sliders-h"></i>
+                                        Alpha (Düzenleme Katsayısı)
+                                    </label>
+                                    <input type="number" name="" id="elasticnet_alpha_input" class="form-control" 
+                                           value="1.0" min="0.001" max="100" step="0.1" disabled>
+                                    <small class="form-text text-muted">
+                                        Düşük değer (0.1): Az düzenleme, yüksek değer (10): Çok düzenleme
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- L1 Ratio Parametresi (sadece ElasticNet için) -->
+                            <div class="col-md-4">
+                                <div class="form-group" id="l1-ratio-param" style="display: none;">
+                                    <label for="l1_ratio_input">
+                                        <i class="fas fa-balance-scale"></i>
+                                        L1 Ratio (L1/L2 Karışımı)
+                                    </label>
+                                    <input type="number" name="" id="l1_ratio_input" class="form-control" 
+                                           value="0.5" min="0" max="1" step="0.1" disabled>
+                                    <small class="form-text text-muted">
+                                        0: Sadece Ridge (L2), 1: Sadece Lasso (L1), 0.5: Eşit karışım
                                     </small>
                                 </div>
                             </div>
@@ -209,6 +239,7 @@ document.getElementById('model_type').addEventListener('change', function() {
         'linear_regression': 'Basit ve hızlı. Doğrusal ilişkiler için uygun.',
         'ridge': 'Linear regression + L2 düzenleme. Overfitting\'i önler.',
         'lasso': 'Linear regression + L1 düzenleme. Feature seçimi yapar.',
+        'elasticnet': 'Ridge + Lasso kombinasyonu. Güçlü ve esnek düzenleme.',
         'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
         'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
         'decision_tree': 'Anlaşılması kolay ama bazen kararsız.'
@@ -222,16 +253,26 @@ document.getElementById('model_type').addEventListener('change', function() {
     // Model parametrelerini göster/gizle
     const ridgeAlphaParam = document.getElementById('ridge-alpha-param');
     const lassoAlphaParam = document.getElementById('lasso-alpha-param');
+    const elasticnetAlphaParam = document.getElementById('elasticnet-alpha-param');
+    const l1RatioParam = document.getElementById('l1-ratio-param');
     const ridgeInput = document.getElementById('ridge_alpha_input');
     const lassoInput = document.getElementById('lasso_alpha_input');
+    const elasticnetAlphaInput = document.getElementById('elasticnet_alpha_input');
+    const l1RatioInput = document.getElementById('l1_ratio_input');
     
     // Tüm parametreleri gizle ve devre dışı bırak
     ridgeAlphaParam.style.display = 'none';
     lassoAlphaParam.style.display = 'none';
+    elasticnetAlphaParam.style.display = 'none';
+    l1RatioParam.style.display = 'none';
     ridgeInput.name = '';
     lassoInput.name = '';
+    elasticnetAlphaInput.name = '';
+    l1RatioInput.name = '';
     ridgeInput.disabled = true;
     lassoInput.disabled = true;
+    elasticnetAlphaInput.disabled = true;
+    l1RatioInput.disabled = true;
     
     // Seçili modele göre parametreleri göster ve aktif et
     if (selectedModel === 'ridge') {
@@ -242,6 +283,13 @@ document.getElementById('model_type').addEventListener('change', function() {
         lassoAlphaParam.style.display = 'block';
         lassoInput.name = 'alpha';
         lassoInput.disabled = false;
+    } else if (selectedModel === 'elasticnet') {
+        elasticnetAlphaParam.style.display = 'block';
+        l1RatioParam.style.display = 'block';
+        elasticnetAlphaInput.name = 'alpha';
+        l1RatioInput.name = 'l1_ratio';
+        elasticnetAlphaInput.disabled = false;
+        l1RatioInput.disabled = false;
     }
 });
 
