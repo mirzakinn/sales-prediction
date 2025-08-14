@@ -10,6 +10,11 @@ from utils.file_utils import ensure_upload_folder
 from blueprints.main import main_bp
 from blueprints.upload import upload_bp
 from blueprints.results import results_bp
+from blueprints.model_management import management_bp
+from blueprints.predictions import prediction_bp
+from blueprints.model_training import training_bp  
+from blueprints.data_processing import processing_bp
+
 
 def create_app(config_name='default'):
     """Flask uygulaması factory fonksiyonu"""
@@ -25,7 +30,11 @@ def create_app(config_name='default'):
     app.register_blueprint(main_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(results_bp)
-    
+    app.register_blueprint(management_bp)
+    app.register_blueprint(prediction_bp)
+    app.register_blueprint(training_bp)
+    app.register_blueprint(processing_bp)
+
     # Template context processor - session'ı template'lerde kullanılabilir yap
     @app.context_processor
     def inject_session():

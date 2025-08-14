@@ -23,9 +23,13 @@ def get_all_models():
         
         return models
 
-def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_column, feature_columns):
+def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_column, feature_columns, filename=None):
     
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Eğer filename verilmemişse default olarak 'data.csv' kullan
+    if filename is None:
+        filename = "data.csv"
     
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -35,7 +39,7 @@ def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_c
             (model_type, dataset_filename, target_column, feature_columns, 
              r2_score, mae, mse, rmse, is_active, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (algorithm, "data.csv", target_column, str(feature_columns), 
+        """, (algorithm, filename, target_column, str(feature_columns), 
               r2_score, mae, mse, rmse, 1, now))
 
         conn.commit()
