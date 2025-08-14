@@ -34,7 +34,7 @@ def delete_model_route(model_id):
         
         if not model:
             flash('Model bulunamadı!', 'error')
-            return redirect(url_for('results.results'))
+            return redirect(url_for('management.results'))
         
         # Database'den modeli sil
         delete_model(model_id)
@@ -62,10 +62,10 @@ def delete_model_route(model_id):
         print(f"Silinen dosyalar: {deleted_files}")
         
         flash(f'Model başarıyla silindi! (ID: {model_id})', 'success')
-        return redirect(url_for('results.results'))
+        return redirect(url_for('management.results'))
         
     except Exception as e:
         print(f"Model silme hatası: {e}")
         flash(f'Model silinirken hata oluştu: {str(e)}', 'error')
-        return redirect(url_for('results.results'))
+        return redirect(url_for('management.results'))
     

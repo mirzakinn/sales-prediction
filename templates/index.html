@@ -20,7 +20,7 @@
                 
                 <!-- 2. Kolon Seç - Veri yüklendiyse aktif -->
                 {% if session.get('current_file') %}
-                <a href="{{ url_for('results.select_columns', filename=session.get('current_file')) }}" class="btn btn-success btn-lg">
+                <a href="{{ url_for('processing.select_columns', filename=session.get('current_file')) }}" class="btn btn-success btn-lg">
                     <i class="fas fa-columns me-2"></i>2. Kolon Seç
                 </a>
                 {% else %}
@@ -31,7 +31,7 @@
                 
                 <!-- 3. Model Eğit - Kolonlar seçildiyse aktif -->
                 {% if session.get('target_column') and session.get('feature_columns') %}
-                <a href="{{ url_for('results.configure_model') }}" class="btn btn-warning btn-lg">
+                <a href="{{ url_for('training.configure_model') }}" class="btn btn-warning btn-lg">
                     <i class="fas fa-brain me-2"></i>3. Model Eğit
                 </a>
                 {% else %}
@@ -42,7 +42,7 @@
                 
                 <!-- 4. Tahmin Yap - Model eğitildiyse aktif -->
                 {% if session.get('trained_model') %}
-                <a href="{{ url_for('results.make_prediction') }}" class="btn btn-info btn-lg">
+                <a href="{{ url_for('prediction.make_prediction') }}" class="btn btn-info btn-lg">
                     <i class="fas fa-crystal-ball me-2"></i>4. Tahmin Yap
                 </a>
                 {% else %}
@@ -52,7 +52,7 @@
                 {% endif %}
                 
                 <!-- Önceki Sonuçlar ve Eğitilmiş Modeller - Her zaman aktif -->
-                <a href="{{ url_for('results.results') }}" class="btn btn-outline-primary btn-lg text-danger border-3 fw-bold" style="background-color: #f8f9fa;">
+                <a href="{{ url_for('management.results') }}" class="btn btn-outline-primary btn-lg text-danger border-3 fw-bold" style="background-color: #f8f9fa;">
                     <i class="fas fa-chart-bar me-2"></i>Önceki Sonuçlar ve Eğitilmiş Modeller
                 </a>
             </div>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-3">
-                    <a href="{{ url_for('results.clear_session') }}" class="btn btn-sm shadow-sm" style="background-color: #f8f9fa; color: #ff0000; border: 2px solid #ff0000; border-radius: 15px;">
+                    <a href="{{ url_for('processing.clear_session') }}" class="btn btn-sm shadow-sm" style="background-color: #f8f9fa; color: #ff0000; border: 2px solid #ff0000; border-radius: 15px;">
                         <i class="fas fa-refresh"></i> Yeniden Başla
                     </a>
                 </div>

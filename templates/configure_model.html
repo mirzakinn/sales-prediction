@@ -54,7 +54,7 @@
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex justify-content-between">
-                                    <a href="{{ url_for('results.select_columns', filename=filename) }}" class="btn btn-secondary">
+                                    <a href="{{ url_for('processing.select_columns', filename=filename) }}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left"></i> Geri
                                     </a>
                                     <button type="submit" class="btn btn-primary btn-lg">
@@ -67,7 +67,7 @@
                     
                     {% else %}
                     <!-- NORMAL MODE: Model eğitimi -->
-                    <form method="POST" action="{{ url_for('results.train_model') }}">
+                    <form method="POST" action="{{ url_for('training.train_model') }}">
                         <div class="row">
                             <!-- Model Türü -->
                             <div class="col-md-4">
@@ -78,11 +78,12 @@
                                     </label>
                                     <select name="model_type" id="model_type" class="form-control" required>
                                         <option value="linear_regression">Linear Regression</option>
+                                        <option value="ridge">Ridge Regression</option>
                                         <option value="random_forest">Random Forest</option>
                                         <option value="xgboost">XGBoost</option>
                                         <option value="decision_tree">Decision Tree</option>
                                     </select>
-                                    <small class="form-text text-muted">
+                                    <small class="form-text text-muted" id="model-info">
                                         Başlangıç için Linear Regression önerilir.
                                     </small>
                                 </div>
@@ -125,6 +126,23 @@
                             </div>
                         </div>
 
+                        <!-- Model Parametreleri (Dinamik) -->
+                            <div class="col-md-4" id="model-params-container">
+                                <!-- Ridge Alpha Parametresi -->
+                                <div class="form-group" id="ridge-alpha-param" style="display: none;">
+                                    <label for="alpha">
+                                        <i class="fas fa-sliders-h"></i>
+                                        Alpha (Düzenleme Katsayısı)
+                                    </label>
+                                    <input type="number" name="alpha" id="alpha" class="form-control" 
+                                           value="1.0" min="0.001" max="100" step="0.1">
+                                    <small class="form-text text-muted">
+                                        Düşük değer (0.1): Az düzenleme, yüksek değer (10): Çok düzenleme
+                                    </small>
+                                </div>
+                            </div>
+
+
                         <!-- Eksik Veri Uyarısı -->
                         {% set has_missing = false %}
                         {% for col, data in missing_data.items() %}
@@ -151,7 +169,7 @@
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex justify-content-between">
-                                    <a href="{{ url_for('results.select_columns', filename=filename) }}" class="btn btn-secondary">
+                                    <a href="{{ url_for('processing.select_columns', filename=filename) }}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left"></i> Geri
                                     </a>
                                     <button type="submit" class="btn btn-success btn-lg">
@@ -170,18 +188,37 @@
 </div>
 
 <script>
-// Model türü hakkında bilgi göster
+// Model türü hakkında bilgi göster ve parametreleri kontrol et
 document.getElementById('model_type').addEventListener('change', function() {
     const modelInfo = {
         'linear_regression': 'Basit ve hızlı. Doğrusal ilişkiler için uygun.',
+        'ridge': 'Linear regression + düzenleme. Overfitting\'i önler.',
         'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
         'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
         'decision_tree': 'Anlaşılması kolay ama bazen kararsız.'
     };
     
-    const info = modelInfo[this.value];
-    const small = this.parentElement.querySelector('small');
-    small.textContent = info;
+    const selectedModel = this.value;
+    const info = modelInfo[selectedModel];
+    const infoElement = document.getElementById('model-info');
+    infoElement.textContent = info;
+    
+    // Model parametrelerini göster/gizle
+    const ridgeAlphaParam = document.getElementById('ridge-alpha-param');
+    
+    // Tüm parametreleri gizle
+    ridgeAlphaParam.style.display = 'none';
+    
+    // Seçili modele göre parametreleri göster
+    if (selectedModel === 'ridge') {
+        ridgeAlphaParam.style.display = 'block';
+    }
+});
+
+// Sayfa yüklendiğinde mevcut seçimi kontrol et
+document.addEventListener('DOMContentLoaded', function() {
+    const modelSelect = document.getElementById('model_type');
+    modelSelect.dispatchEvent(new Event('change'));
 });
 </script>
 {% endblock %}

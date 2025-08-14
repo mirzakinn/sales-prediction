@@ -9,7 +9,6 @@ from config import config
 from utils.file_utils import ensure_upload_folder
 from blueprints.main import main_bp
 from blueprints.upload import upload_bp
-from blueprints.results import results_bp
 from blueprints.model_management import management_bp
 from blueprints.predictions import prediction_bp
 from blueprints.model_training import training_bp  
@@ -29,7 +28,6 @@ def create_app(config_name='default'):
     # Blueprint'leri kaydet
     app.register_blueprint(main_bp)
     app.register_blueprint(upload_bp)
-    app.register_blueprint(results_bp)
     app.register_blueprint(management_bp)
     app.register_blueprint(prediction_bp)
     app.register_blueprint(training_bp)
@@ -82,7 +80,10 @@ if __name__ == '__main__':
     print("💡 Blueprint yapısı:")
     print("   • Main Blueprint: Ana sayfa")
     print("   • Upload Blueprint: Dosya yükleme") 
-    print("   • Results Blueprint: Sonuçlar ve ML işlemleri")
+    print("   • Management Blueprint: Model yönetimi")
+    print("   • Prediction Blueprint: Tahmin işlemleri")
+    print("   • Training Blueprint: Model eğitimi")
+    print("   • Processing Blueprint: Veri işleme")
     print("=" * 60)
     
     # Uygulamayı çalıştır

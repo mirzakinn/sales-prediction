@@ -40,9 +40,12 @@ def make_prediction():
                         prediction_data[feature] = value
                 else:
                     flash(f'{feature} alanı boş bırakılamaz!', 'error')
-                    return redirect(url_for('results.make_prediction'))
+                    return redirect(url_for('prediction.make_prediction'))
             
-            # Normal model eğitiminden sonra tahmin yapma durumu
+            # Tahmin modunu kontrol et
+            prediction_model = None
+            model_objects = None
+            
             if session.get('prediction_mode_active'):
                 # PREDICTION MODE: Seçilen modeli kullan
                 prediction_model = session.get('prediction_model')
@@ -51,7 +54,7 @@ def make_prediction():
                 
                 if not prediction_model:
                     flash('Tahmin modeli bulunamadı!', 'error')
-                    return redirect(url_for('results.results'))
+                    return redirect(url_for('management.results'))
                 
                 # Model dosyalarını yükle
                 from utils.file_utils import load_model_files
@@ -61,8 +64,8 @@ def make_prediction():
                 
                 if not model_objects:
                     flash('Model dosyaları yüklenemedi!', 'error')
-                    return redirect(url_for('results.results'))
-                    
+                    return redirect(url_for('management.results'))
+                
                 # Kategorik kolonları encode et
                 encoders = model_objects['encoders']
                 # Feature'ları doğru sırayla al ve scale et
@@ -73,37 +76,79 @@ def make_prediction():
                 model = model_objects['model']
                 prediction = model.predict(input_scaled)[0]
             else:
-                # Normal eğitimden sonra tahmin yapma - Global değişkenleri kullan
-                print("🔍 Using current session trained model with global variables")
+                # Normal eğitimden sonra tahmin yapma - Model ID'sinden dosya yükle
+                print("🔍 Using current session trained model")
                 
-                # Global değişkenlerin tanımlı olup olmadığını kontrol et
-                try:
+                # Önce session'dan model ID'sini almaya çalış
+                current_model_id = session.get('current_model_id')
+                current_model_ready = session.get('current_model_ready', False)
+                
+                if current_model_id and current_model_ready:
+                    print(f"🔍 Loading model objects from files (ID: {current_model_id})")
+                    
+                    # Model dosyalarından yükle
+                    from utils.file_utils import load_model_files
+                    model_objects = load_model_files(current_model_id)
+                    
+                    if model_objects:
+                        # Dosyadan yüklenen model objelerini kullan
+                        session_model = model_objects['model']
+                        session_encoders = model_objects['encoders']
+                        session_scaler = model_objects['scaler']
+                        
+                        # Kullanıcı verisini DataFrame'e çevir ve işle
+                        input_df = pd.DataFrame([prediction_data])
+                        
+                        # Kategorik kolonları encode et
+                        for col in input_df.columns:
+                            if col in session_encoders:
+                                try:
+                                    input_df[col] = session_encoders[col].transform([str(prediction_data[col])])[0]
+                                except:
+                                    # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
+                                    most_common = session_encoders[col].classes_[0]
+                                    input_df[col] = session_encoders[col].transform([most_common])[0]
+                        
+                        # Feature'ları doğru sırayla al ve scale et
+                        feature_values = input_df[trained_model['feature_columns']].values
+                        input_scaled = session_scaler.transform(feature_values)
+                        
+                        # Tahmin yap
+                        prediction = session_model.predict(input_scaled)[0]
+                    else:
+                        flash('Model dosyaları yüklenemedi!', 'error')
+                        return redirect(url_for('upload.upload_file'))
+                    
+                elif CURRENT_MODEL is not None and CURRENT_ENCODERS is not None and CURRENT_SCALER is not None:
+                    print("🔍 Using global variables as fallback")
+                    
+                    # Global değişkenleri fallback olarak kullan
                     print(f"CURRENT_MODEL exists: {CURRENT_MODEL is not None}")
                     print(f"CURRENT_ENCODERS exists: {CURRENT_ENCODERS is not None}")
                     print(f"CURRENT_SCALER exists: {CURRENT_SCALER is not None}")
-                except NameError as e:
+                    
+                    # Kullanıcı verisini DataFrame'e çevir ve işle
+                    input_df = pd.DataFrame([prediction_data])
+                    
+                    # Kategorik kolonları encode et
+                    for col in input_df.columns:
+                        if col in CURRENT_ENCODERS:
+                            try:
+                                input_df[col] = CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
+                            except:
+                                # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
+                                most_common = CURRENT_ENCODERS[col].classes_[0]
+                                input_df[col] = CURRENT_ENCODERS[col].transform([most_common])[0]
+                    
+                    # Feature'ları doğru sırayla al ve scale et
+                    feature_values = input_df[trained_model['feature_columns']].values
+                    input_scaled = CURRENT_SCALER.transform(feature_values)
+                    
+                    # Tahmin yap
+                    prediction = CURRENT_MODEL.predict(input_scaled)[0]
+                else:
                     flash('Model objeleri bulunamadı. Lütfen önce bir model eğitin.', 'error')
                     return redirect(url_for('upload.upload_file'))
-                
-                # Kullanıcı verisini DataFrame'e çevir ve işle
-                input_df = pd.DataFrame([prediction_data])
-                
-                # Kategorik kolonları encode et
-                for col in input_df.columns:
-                    if col in CURRENT_ENCODERS:
-                        try:
-                            input_df[col] = CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
-                        except:
-                            # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
-                            most_common = CURRENT_ENCODERS[col].classes_[0]
-                            input_df[col] = CURRENT_ENCODERS[col].transform([most_common])[0]
-                
-                # Feature'ları doğru sırayla al ve scale et
-                feature_values = input_df[trained_model['feature_columns']].values
-                input_scaled = CURRENT_SCALER.transform(feature_values)
-                
-                # Tahmin yap
-                prediction = CURRENT_MODEL.predict(input_scaled)[0]
             
             # Session'ı temizle
             session.pop('prediction_mode_active', None)
@@ -117,7 +162,7 @@ def make_prediction():
             
         except Exception as e:
             flash(f'Tahmin yapma hatası: {str(e)}', 'error')
-            return redirect(url_for('results.make_prediction'))
+            return redirect(url_for('prediction.make_prediction'))
     
     # GET isteği - Tahmin formunu göster
     return render_template('make_prediction.html', 
@@ -143,14 +188,14 @@ def make_prediction_new():
             
             if not model_id:
                 flash('Model ID eksik!', 'error')
-                return redirect(url_for('results.results'))
+                return redirect(url_for('management.results'))
             
             # Database'den model bilgilerini al
             model_info = get_model_by_id(int(model_id))
             
             if not model_info:
                 flash('Model veritabanında bulunamadı!', 'error')
-                return redirect(url_for('results.results'))
+                return redirect(url_for('management.results'))
             
             # Debug: feature_columns'u kontrol et
             print(f"Raw feature_columns: {model_info['feature_columns']}")
@@ -219,12 +264,12 @@ def make_prediction_new():
             import traceback
             traceback.print_exc()
             flash(f'Model yükleme hatası: {str(e)}', 'error')
-            return redirect(url_for('results.results'))
+            return redirect(url_for('management.results'))
     
     else:
         # GET request - model seçilmeden gelindiyse
         flash('Önce bir model seçmelisiniz!', 'error') 
-        return redirect(url_for('results.results'))
+        return redirect(url_for('management.results'))
 
 
 

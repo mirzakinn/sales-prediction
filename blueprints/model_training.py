@@ -56,7 +56,7 @@ def configure_model():
         
         if not target_column or not feature_columns:
             flash('Hedef kolon ve en az bir özellik kolonu seçmelisiniz!', 'error')
-            return redirect(url_for('results.select_columns', filename=session.get('current_file')))
+            return redirect(url_for('processing.select_columns', filename=session.get('current_file')))
         
         # Seçimleri session'a kaydet
         session['target_column'] = target_column
@@ -85,7 +85,7 @@ def configure_model():
         
     except Exception as e:
         flash(f'Hata oluştu: {str(e)}', 'error')
-        return redirect(url_for('results.select_columns', filename=session.get('current_file')))
+        return redirect(url_for('processing.select_columns', filename=session.get('current_file')))
 
 @training_bp.route('/train-model', methods=['POST'])
 def train_model():
@@ -98,6 +98,17 @@ def train_model():
         model_type = request.form.get('model_type')
         test_size = float(request.form.get('test_size', 0.2))
         handle_missing = request.form.get('handle_missing', 'drop')
+        
+        # Model parametrelerini al
+        model_params = {}
+        if model_type == 'ridge':
+            alpha = request.form.get('alpha', '1.0')
+            try:
+                model_params['alpha'] = float(alpha)
+            except ValueError:
+                model_params['alpha'] = 1.0  # Default değer
+        
+        print(f"Model parametreleri: {model_params}")  # Debug için
         
         filename = session.get('current_file')
         target_column = session.get('target_column')
@@ -130,15 +141,11 @@ def train_model():
         df_processed, encoders = encoding_data(df_processed)
         _, x, y, scaler = scaling_data(df_processed,feature_columns, target_column)
         x_train, x_test, y_train, y_test = data_split(x, y, test_size)
-        reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type)
+        reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type, model_params)
         # Model objelerini global değişkenlere at
         CURRENT_MODEL = reg
         CURRENT_ENCODERS = encoders
         CURRENT_SCALER = scaler
-        # 4. Train/test split yap
-        # 5. Modeli eğit
-        # 6. Performans metriklerini hesapla
-        # 7. Modeli kaydet
         
         # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
         model_performance = analyze_model(y_test, y_pred)
@@ -164,12 +171,12 @@ def train_model():
             rmse=model_performance["rmse"],
             target_column=target_column,
             feature_columns=feature_columns,
-            filename=filename
+            filename=filename,
+            model_params=model_params
         )
 
         print(f"Model database'e kaydedildi. ID: {model_id}")
 
-        
         # Model dosyalarını kaydet
         file_paths = save_model_files(
             model_id=model_id,
@@ -178,6 +185,10 @@ def train_model():
             scaler_obj=CURRENT_SCALER
         )
         print(f"Model dosyaları kaydedildi: {file_paths}")
+
+        # Session'a model ID'sini kaydet (objeler değil)
+        session['current_model_id'] = model_id
+        session['current_model_ready'] = True
         
         print(f"Model Performance: {model_performance}")  # Debug için
         flash(f'Model eğitildi! R² Score: {model_performance["r2_score"]:.3f}', 'success')
@@ -189,5 +200,5 @@ def train_model():
         
     except Exception as e:
         flash(f'Model eğitimi hatası: {str(e)}', 'error')
-        return redirect(url_for('results.configure_model'))
+        return redirect(url_for('training.configure_model'))
 

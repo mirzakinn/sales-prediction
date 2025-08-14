@@ -40,7 +40,7 @@
                     </div>
 
                     <!-- Tahmin Formu -->
-                    <form method="POST" action="{{ url_for('results.make_prediction') }}">
+                    <form method="POST" action="{{ url_for('prediction.make_prediction') }}">
                         <div class="row">
                             {% for feature in feature_columns %}
                             <div class="col-md-6 col-lg-4 mb-3">
@@ -91,7 +91,7 @@
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex justify-content-between">
-                                    <a href="{{ url_for('results.results') }}" class="btn btn-secondary">
+                                    <a href="{{ url_for('management.results') }}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left"></i> Sonuçlara Dön
                                     </a>
                                     <button type="submit" class="btn btn-success btn-lg">

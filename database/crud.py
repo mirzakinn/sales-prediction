@@ -23,7 +23,7 @@ def get_all_models():
         
         return models
 
-def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_column, feature_columns, filename=None):
+def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_column, feature_columns, filename=None, model_params=None):
     
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -31,16 +31,19 @@ def save_trained_model(model_name, algorithm, r2_score, mae, mse, rmse, target_c
     if filename is None:
         filename = "data.csv"
     
+    # Model parametrelerini JSON string'e çevir
+    model_params_json = json.dumps(model_params) if model_params else None
+    
     with get_db_connection() as conn:
         cursor = conn.cursor()
 
         cursor.execute("""
             INSERT INTO trained_models 
             (model_type, dataset_filename, target_column, feature_columns, 
-             r2_score, mae, mse, rmse, is_active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             r2_score, mae, mse, rmse, is_active, created_at, model_params)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (algorithm, filename, target_column, str(feature_columns), 
-              r2_score, mae, mse, rmse, 1, now))
+              r2_score, mae, mse, rmse, 1, now, model_params_json))
 
         conn.commit()
         

@@ -50,6 +50,8 @@ function showModelDetails(modelIndex, cardElement) {
         const rmse = parseFloat(button.getAttribute('data-rmse'));
         const createdAt = button.getAttribute('data-created-at');
         const featuresJson = button.getAttribute('data-features');
+        const modelParamsJson = button.getAttribute('data-model-params');
+        const datasetFilename = button.getAttribute('data-dataset-filename');
         
         // JSON string'i parse et
         let features = [];
@@ -57,6 +59,16 @@ function showModelDetails(modelIndex, cardElement) {
             features = JSON.parse(featuresJson.replace(/'/g, '"'));
         } catch {
             features = featuresJson ? featuresJson.split(',') : [];
+        }
+
+        // Model parametrelerini parse et
+        let modelParams = {};
+        try {
+            if (modelParamsJson && modelParamsJson !== 'null' && modelParamsJson !== 'None') {
+                modelParams = JSON.parse(modelParamsJson);
+            }
+        } catch {
+            modelParams = {};
         }
 
         // Calculate additional display values
@@ -84,7 +96,8 @@ function showModelDetails(modelIndex, cardElement) {
                                     <table class="table table-sm">
                                         <tr><td><strong>Model ID:</strong></td><td><span class="badge" style="background-color: #ff0000;">#${modelId}</span></td></tr>
                                         <tr><td><strong>Model Türü:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelTypeDisplay}</span></td></tr>
-                                        <tr><td><strong>Veri Dosyası:</strong></td><td>data.csv</td></tr>
+                                        ${modelType === 'ridge' && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
+                                        <tr><td><strong>Veri Dosyası:</strong></td><td>${datasetFilename || 'data.csv'}</td></tr>
                                         <tr><td><strong>Hedef Değişken:</strong></td><td><span class="badge" style="background-color: #ff0000;">${targetColumn}</span></td></tr>
                                         <tr><td><strong>Özellik Değişkenleri:</strong></td><td>
                                             ${features.map(feature => `<span class="badge" style="background-color: #ff0000; margin-right: 5px;">${feature}</span>`).join('')}

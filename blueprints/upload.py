@@ -47,7 +47,7 @@ def upload_file():
                     
                     # Başarılı yükleme sonrası kolon seçimine yönlendir
                     flash(f'Dosya başarıyla yüklendi! ({df.shape[0]} satır, {df.shape[1]} kolon)', 'success')
-                    return redirect(url_for('results.select_columns', filename=filename))
+                    return redirect(url_for('processing.select_columns', filename=filename))
                     
                 except Exception as read_error:
                     flash(f'Dosya okuma hatası: {str(read_error)}', 'error')
