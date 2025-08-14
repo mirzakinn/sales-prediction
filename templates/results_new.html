@@ -25,7 +25,17 @@
                         <div class="card-header bg-primary text-white">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-robot"></i>
-                                {{ model.model_type|title }}
+                                {% set model_type_map = {
+                                    'knn': 'K-Nearest Neighbor Regression',
+                                    'elasticnet': 'ElasticNet Regression',
+                                    'lasso': 'Lasso Regression',
+                                    'ridge': 'Ridge Regression',
+                                    'decision_tree': 'Decision Tree',
+                                    'linear_regression': 'Linear Regression',
+                                    'random_forest': 'Random Forest',
+                                    'xgboost': 'XGBoost'
+                                } %}
+                                {{ model_type_map.get(model.model_type, model.model_type|title) }}
                             </h5>
                         </div>
                         <div class="card-body">

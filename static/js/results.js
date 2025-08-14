@@ -99,6 +99,8 @@ function showModelDetails(modelIndex, cardElement) {
                                         ${(modelType === 'ridge' || modelType === 'lasso') && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
                                         ${modelType === 'elasticnet' && modelParams.alpha ? `<tr><td><strong>Alpha Değeri:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.alpha}</span></td></tr>` : ''}
                                         ${modelType === 'elasticnet' && modelParams.l1_ratio !== undefined ? `<tr><td><strong>L1 Ratio:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.l1_ratio}</span></td></tr>` : ''}
+                                        ${modelType === 'knn' && modelParams.n_neighbors ? `<tr><td><strong>Komşu Sayısı (K):</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.n_neighbors}</span></td></tr>` : ''}
+                                        ${modelType === 'knn' && modelParams.weights ? `<tr><td><strong>Ağırlık Türü:</strong></td><td><span class="badge" style="background-color: #ff0000;">${modelParams.weights === 'distance' ? 'Distance (Mesafe bazlı)' : 'Uniform (Eşit ağırlık)'}</span></td></tr>` : ''}
                                         <tr><td><strong>Veri Dosyası:</strong></td><td>${datasetFilename || 'data.csv'}</td></tr>
                                         <tr><td><strong>Hedef Değişken:</strong></td><td><span class="badge" style="background-color: #ff0000;">${targetColumn}</span></td></tr>
                                         <tr><td><strong>Özellik Değişkenleri:</strong></td><td>

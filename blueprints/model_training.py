@@ -118,6 +118,15 @@ def train_model():
             except ValueError:
                 model_params['alpha'] = 1.0
                 model_params['l1_ratio'] = 0.5
+        elif model_type == 'knn':
+            n_neighbors = request.form.get('n_neighbors', '5')
+            weights = request.form.get('weights', 'distance')
+            try:
+                model_params['n_neighbors'] = int(n_neighbors)
+                model_params['weights'] = str(weights)
+            except ValueError:
+                model_params['n_neighbors'] = 5
+                model_params['weights'] = 'distance'
         
         filename = session.get('current_file')
         target_column = session.get('target_column')

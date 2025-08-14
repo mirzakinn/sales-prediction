@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
@@ -74,6 +75,14 @@ def elasticnet_regression(x_train, x_test, y_train, y_test, alpha=1.0, l1_ratio=
 
     return elasticnet, y_pred, score
 
+def knn_regression(x_train, x_test, y_train, y_test, n_neighbors=5, weights='distance'):
+    knn = KNeighborsRegressor(n_neighbors=n_neighbors, weights=weights)
+    knn.fit(x_train, y_train)
+    y_pred = knn.predict(x_test)
+    score = knn.score(x_test, y_test)
+
+    return knn, y_pred, score
+
 def decision_tree(x_train, x_test, y_train, y_test):
     regressor = DecisionTreeRegressor()
     model = regressor.fit(x_train, y_train)
@@ -114,6 +123,10 @@ def select_model(x_train, y_train, x_test, y_test, model_type, model_params=None
         alpha = model_params.get('alpha', 1.0)
         l1_ratio = model_params.get('l1_ratio', 0.5)
         return elasticnet_regression(x_train, x_test, y_train, y_test, alpha=alpha, l1_ratio=l1_ratio)
+    elif model_type == 'knn':
+        n_neighbors = model_params.get('n_neighbors', 5)
+        weights = model_params.get('weights', 'distance')
+        return knn_regression(x_train, x_test, y_train, y_test, n_neighbors=n_neighbors, weights=weights)
     elif model_type == 'decision_tree':
         return decision_tree(x_train, x_test, y_train, y_test)
     elif model_type == 'random_forest':

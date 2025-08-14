@@ -81,6 +81,7 @@
                                         <option value="ridge">Ridge Regression</option>
                                         <option value="lasso">Lasso Regression</option>
                                         <option value="elasticnet">ElasticNet Regression</option>
+                                        <option value="knn">KNN Regression</option>
                                         <option value="random_forest">Random Forest</option>
                                         <option value="xgboost">XGBoost</option>
                                         <option value="decision_tree">Decision Tree</option>
@@ -170,6 +171,19 @@
                                         Düşük değer (0.1): Az düzenleme, yüksek değer (10): Çok düzenleme
                                     </small>
                                 </div>
+                                
+                                <!-- KNN N_Neighbors Parametresi -->
+                                <div class="form-group" id="knn-neighbors-param" style="display: none;">
+                                    <label for="n_neighbors_input">
+                                        <i class="fas fa-users"></i>
+                                        Komşu Sayısı (K)
+                                    </label>
+                                    <input type="number" name="" id="n_neighbors_input" class="form-control" 
+                                           value="5" min="1" max="50" step="1" disabled>
+                                    <small class="form-text text-muted">
+                                        Düşük değer (3): Daha esnek, yüksek değer (15): Daha stabil
+                                    </small>
+                                </div>
                             </div>
                             
                             <!-- L1 Ratio Parametresi (sadece ElasticNet için) -->
@@ -183,6 +197,21 @@
                                            value="0.5" min="0" max="1" step="0.1" disabled>
                                     <small class="form-text text-muted">
                                         0: Sadece Ridge (L2), 1: Sadece Lasso (L1), 0.5: Eşit karışım
+                                    </small>
+                                </div>
+                                
+                                <!-- KNN Weights Parametresi -->
+                                <div class="form-group" id="knn-weights-param" style="display: none;">
+                                    <label for="weights_input">
+                                        <i class="fas fa-weight-hanging"></i>
+                                        Ağırlık Türü
+                                    </label>
+                                    <select name="" id="weights_input" class="form-control" disabled>
+                                        <option value="uniform">Uniform (Eşit ağırlık)</option>
+                                        <option value="distance" selected>Distance (Mesafe bazlı)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Distance: Yakın komşular daha fazla etkili
                                     </small>
                                 </div>
                             </div>
@@ -240,6 +269,7 @@ document.getElementById('model_type').addEventListener('change', function() {
         'ridge': 'Linear regression + L2 düzenleme. Overfitting\'i önler.',
         'lasso': 'Linear regression + L1 düzenleme. Feature seçimi yapar.',
         'elasticnet': 'Ridge + Lasso kombinasyonu. Güçlü ve esnek düzenleme.',
+        'knn': 'Komşu tabanlı tahmin. Yerel kalıpları iyi yakalar.',
         'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
         'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
         'decision_tree': 'Anlaşılması kolay ama bazen kararsız.'
@@ -255,24 +285,34 @@ document.getElementById('model_type').addEventListener('change', function() {
     const lassoAlphaParam = document.getElementById('lasso-alpha-param');
     const elasticnetAlphaParam = document.getElementById('elasticnet-alpha-param');
     const l1RatioParam = document.getElementById('l1-ratio-param');
+    const knnNeighborsParam = document.getElementById('knn-neighbors-param');
+    const knnWeightsParam = document.getElementById('knn-weights-param');
     const ridgeInput = document.getElementById('ridge_alpha_input');
     const lassoInput = document.getElementById('lasso_alpha_input');
     const elasticnetAlphaInput = document.getElementById('elasticnet_alpha_input');
     const l1RatioInput = document.getElementById('l1_ratio_input');
+    const knnNeighborsInput = document.getElementById('n_neighbors_input');
+    const knnWeightsInput = document.getElementById('weights_input');
     
     // Tüm parametreleri gizle ve devre dışı bırak
     ridgeAlphaParam.style.display = 'none';
     lassoAlphaParam.style.display = 'none';
     elasticnetAlphaParam.style.display = 'none';
     l1RatioParam.style.display = 'none';
+    knnNeighborsParam.style.display = 'none';
+    knnWeightsParam.style.display = 'none';
     ridgeInput.name = '';
     lassoInput.name = '';
     elasticnetAlphaInput.name = '';
     l1RatioInput.name = '';
+    knnNeighborsInput.name = '';
+    knnWeightsInput.name = '';
     ridgeInput.disabled = true;
     lassoInput.disabled = true;
     elasticnetAlphaInput.disabled = true;
     l1RatioInput.disabled = true;
+    knnNeighborsInput.disabled = true;
+    knnWeightsInput.disabled = true;
     
     // Seçili modele göre parametreleri göster ve aktif et
     if (selectedModel === 'ridge') {
@@ -290,6 +330,13 @@ document.getElementById('model_type').addEventListener('change', function() {
         l1RatioInput.name = 'l1_ratio';
         elasticnetAlphaInput.disabled = false;
         l1RatioInput.disabled = false;
+    } else if (selectedModel === 'knn') {
+        knnNeighborsParam.style.display = 'block';
+        knnWeightsParam.style.display = 'block';
+        knnNeighborsInput.name = 'n_neighbors';
+        knnWeightsInput.name = 'weights';
+        knnNeighborsInput.disabled = false;
+        knnWeightsInput.disabled = false;
     }
 });
 
