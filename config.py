@@ -13,7 +13,7 @@ class Config:
     
     # File upload settings
     UPLOAD_FOLDER = 'uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 256 * 1024 * 1024  # 256MB max file size
     
     # Storage paths for ML models (otomatik klasör oluşturma)
     STORAGE_BASE_PATH = BASE_DIR / 'storage'

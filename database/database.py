@@ -155,26 +155,26 @@ def get_database_info():
 
 # Test fonksiyonu - dosya direkt çalıştırıldığında test yapar
 if __name__ == "__main__":
-    print("🔧 Database modülü test ediliyor...")
+    print("Database modulu test ediliyor...")
     
     # 1. Database'i başlat
-    print("\n1️⃣ Database başlatılıyor...")
+    print("\n1. Database baslatiliyor...")
     if init_database():
-        print("   ✅ init_database() başarılı")
+        print("   init_database() basarili")
     else:
-        print("   ❌ init_database() başarısız")
+        print("   init_database() basarisiz")
     
     # 2. Bağlantıyı test et
-    print("\n2️⃣ Bağlantı test ediliyor...")
+    print("\n2. Baglanti test ediliyor...")
     if test_connection():
-        print("   ✅ test_connection() başarılı")
+        print("   test_connection() basarili")
     else:
-        print("   ❌ test_connection() başarısız")
+        print("   test_connection() basarisiz")
     
     # 3. Database bilgilerini göster
-    print("\n3️⃣ Database bilgileri:")
+    print("\n3. Database bilgileri:")
     info = get_database_info()
     for key, value in info.items():
         print(f"   {key}: {value}")
     
-    print("\n🎉 Test tamamlandı!")
+    print("\nTest tamamlandi!")

@@ -126,8 +126,8 @@ const Utils = {
         return allowedTypes.includes(extension);
     },
 
-    // Validate file size (default 16MB)
-    validateFileSize: function(file, maxSize = 16 * 1024 * 1024) {
+    // Validate file size (default 256MB)
+    validateFileSize: function(file, maxSize = 256 * 1024 * 1024) {
         return file.size <= maxSize;
     }
 };
@@ -169,7 +169,7 @@ const FileUpload = {
             }
 
             if (!Utils.validateFileSize(file)) {
-                Utils.showToast('Dosya boyutu çok büyük. Maksimum 16MB dosya yükleyebilirsiniz.', 'danger');
+                Utils.showToast('Dosya boyutu çok büyük. Maksimum 256MB dosya yükleyebilirsiniz.', 'danger');
                 fileInput.value = '';
                 return;
             }

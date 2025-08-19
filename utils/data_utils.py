@@ -10,21 +10,21 @@ def analyze_dataframe(df, filename):
     DataFrame'i analiz eder ve detayları yazdırır
     """
     print("=" * 50, flush=True)
-    print("📊 VERİ ANALİZİ BAŞLADI", flush=True)
+    print("VERI ANALIZI BASLADI", flush=True)
     print("=" * 50, flush=True)
-    print(f"📁 Dosya başarıyla okundu: {filename}", flush=True)
-    print(f"📏 Veri boyutu: {df.shape[0]} satır, {df.shape[1]} sütun", flush=True)
-    print(f"📋 Sütunlar: {list(df.columns)}", flush=True)
+    print(f"Dosya basariyla okundu: {filename}", flush=True)
+    print(f"Veri boyutu: {df.shape[0]} satir, {df.shape[1]} sutun", flush=True)
+    print(f"Sutunlar: {list(df.columns)}", flush=True)
     
     # Sayısal kolonlar için temel istatistikler
     numeric_columns = df.select_dtypes(include=['number']).columns
     if len(numeric_columns) > 0:
-        print(f"🔢 Sayısal kolonlar: {list(numeric_columns)}", flush=True)
+        print(f"Sayisal kolonlar: {list(numeric_columns)}", flush=True)
     
     # Eksik veri kontrolü
     missing_data = df.isnull().sum()
     if missing_data.any():
-        print("⚠️ Eksik veriler:", flush=True)
+        print("UYARI - Eksik veriler:", flush=True)
         for col, count in missing_data.items():
             if count > 0:
                 print(f"   {col}: {count} eksik", flush=True)

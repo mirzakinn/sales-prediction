@@ -50,7 +50,7 @@ def make_prediction():
                 # PREDICTION MODE: Seçilen modeli kullan
                 prediction_model = session.get('prediction_model')
                 
-                print(f"🔍 Prediction model from session: {prediction_model}")
+                print(f"Prediction model from session: {prediction_model}")
                 
                 if not prediction_model:
                     flash('Tahmin modeli bulunamadı!', 'error')
@@ -60,7 +60,7 @@ def make_prediction():
                 from utils.file_utils import load_model_files
                 model_objects = load_model_files(prediction_model['id'])
                 
-                print(f"🔍 Model objects loaded: {model_objects is not None}")
+                print(f"Model objects loaded: {model_objects is not None}")
                 
                 if not model_objects:
                     flash('Model dosyaları yüklenemedi!', 'error')
@@ -77,14 +77,14 @@ def make_prediction():
                 prediction = model.predict(input_scaled)[0]
             else:
                 # Normal eğitimden sonra tahmin yapma - Model ID'sinden dosya yükle
-                print("🔍 Using current session trained model")
+                print("Using current session trained model")
                 
                 # Önce session'dan model ID'sini almaya çalış
                 current_model_id = session.get('current_model_id')
                 current_model_ready = session.get('current_model_ready', False)
                 
                 if current_model_id and current_model_ready:
-                    print(f"🔍 Loading model objects from files (ID: {current_model_id})")
+                    print(f"Loading model objects from files (ID: {current_model_id})")
                     
                     # Model dosyalarından yükle
                     from utils.file_utils import load_model_files
@@ -120,7 +120,7 @@ def make_prediction():
                         return redirect(url_for('upload.upload_file'))
                     
                 elif CURRENT_MODEL is not None and CURRENT_ENCODERS is not None and CURRENT_SCALER is not None:
-                    print("🔍 Using global variables as fallback")
+                    print("Using global variables as fallback")
                     
                     # Global değişkenleri fallback olarak kullan
                     print(f"CURRENT_MODEL exists: {CURRENT_MODEL is not None}")
@@ -175,11 +175,11 @@ def make_prediction_new():
     Yeni tahmin sayfası - seçili modelle direkt tahmin yapar
     Veri yükleme ve kolon seçme adımlarını atlar
     """
-    print("🔥 make_prediction_new route called!")
+    print("make_prediction_new route called!")
     print(f"Request method: {request.method}")
     
     if request.method == 'POST':
-        print("🔥 POST request received!")
+        print("POST request received!")
         print(f"Form data: {request.form.to_dict()}")
         
         try:
