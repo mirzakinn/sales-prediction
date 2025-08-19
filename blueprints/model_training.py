@@ -3,6 +3,11 @@ import pandas as pd
 import os
 from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
 from utils.ml_utils import *
+from utils.linear_models import *
+from utils.tree_models import *
+from utils.other_models import *
+from utils.model_selector import select_model
+from utils.auto_model_selector import find_best_model, get_model_comparison_summary, get_model_display_name
 from database.crud import *
 from utils.file_utils import save_model_files
 
@@ -103,30 +108,22 @@ def train_model():
         
         # Model parametrelerini al
         model_params = {}
-        if model_type in ['ridge', 'lasso']:
-            alpha = request.form.get('alpha', '1.0')
-            try:
-                model_params['alpha'] = float(alpha)
-            except ValueError:
-                model_params['alpha'] = 1.0  # Default değer
-        elif model_type == 'elasticnet':
-            alpha = request.form.get('alpha', '1.0')
-            l1_ratio = request.form.get('l1_ratio', '0.5')
-            try:
-                model_params['alpha'] = float(alpha)
-                model_params['l1_ratio'] = float(l1_ratio)
-            except ValueError:
-                model_params['alpha'] = 1.0
-                model_params['l1_ratio'] = 0.5
-        elif model_type == 'knn':
-            n_neighbors = request.form.get('n_neighbors', '5')
-            weights = request.form.get('weights', 'distance')
-            try:
-                model_params['n_neighbors'] = int(n_neighbors)
-                model_params['weights'] = str(weights)
-            except ValueError:
-                model_params['n_neighbors'] = 5
-                model_params['weights'] = 'distance'
+        use_grid_search = 'use_grid_search' in request.form
+        use_auto_model_selection = 'use_auto_model_selection' in request.form
+        use_detailed_mode = 'use_detailed_mode' in request.form
+        
+        for key, value in request.form.items():
+            if key not in ['model_type', 'test_size', 'handle_missing', 'use_grid_search', 'use_auto_model_selection', 'use_detailed_mode']:
+                try:
+                    # Sayısal değerleri dönüştür
+                    if value.replace('.', '').replace('-', '').isdigit():
+                        model_params[key] = float(value) if '.' in value else int(value)
+                    elif value.lower() in ['true', 'false']:
+                        model_params[key] = value.lower() == 'true'
+                    else:
+                        model_params[key] = value
+                except:
+                    model_params[key] = value
         
         filename = session.get('current_file')
         target_column = session.get('target_column')
@@ -151,7 +148,11 @@ def train_model():
         columns=selected_columns
         )
 
-        if not all([filename, target_column, feature_columns, model_type]):
+        # Otomatik model seçimi için model_type kontrolünü atla
+        if not use_auto_model_selection and not all([filename, target_column, feature_columns, model_type]):
+            flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
+            return redirect(url_for('upload.upload_file'))
+        elif use_auto_model_selection and not all([filename, target_column, feature_columns]):
             flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
             return redirect(url_for('upload.upload_file'))
 
@@ -159,7 +160,24 @@ def train_model():
         df_processed, encoders = encoding_data(df_processed)
         _, x, y, scaler = scaling_data(df_processed,feature_columns, target_column)
         x_train, x_test, y_train, y_test = data_split(x, y, test_size)
-        reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type, model_params)
+        
+        # Otomatik model seçimi veya normal model eğitimi
+        if use_auto_model_selection:
+            # Tüm modelleri test et ve en iyisini bul
+            best_result = find_best_model(x_train, y_train, x_test, y_test, detailed_mode=use_detailed_mode)
+            reg = best_result['model']
+            y_pred = best_result['predictions']
+            score = best_result['r2_score']
+            model_type = best_result['model_name']  # En iyi modelin adını güncelle
+            model_params = best_result['best_params']  # En iyi parametreleri güncelle
+            
+            # Karşılaştırma özetini konsola yazdır (flash mesajı yok)
+            comparison_summary = get_model_comparison_summary(best_result)
+            print(f"Secilen en iyi model: {get_model_display_name(model_type)} - R2: {score:.4f}")
+            
+        else:
+            # Normal model eğitimi (mevcut kod)
+            reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type, model_params, use_grid_search)
         # Model objelerini global değişkenlere at
         CURRENT_MODEL = reg
         CURRENT_ENCODERS = encoders

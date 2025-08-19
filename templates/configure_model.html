@@ -67,7 +67,7 @@
                     
                     {% else %}
                     <!-- NORMAL MODE: Model eğitimi -->
-                    <form method="POST" action="{{ url_for('training.train_model') }}">
+                    <form method="POST" action="{{ url_for('training.train_model') }}" id="trainForm">
                         <div class="row">
                             <!-- Model Türü -->
                             <div class="col-md-4">
@@ -86,6 +86,7 @@
                                         <option value="decision_tree">Decision Tree</option>
                                         <option value="random_forest">Random Forest</option>
                                         <option value="xgboost">XGBoost</option>
+                                        <option value="lightgbm">LightGBM</option>
                                     </select>
                                     <small class="form-text text-muted" id="model-info">
                                         Başlangıç için Linear Regression önerilir.
@@ -131,7 +132,7 @@
                         </div>
 
                         <!-- Model Parametreleri (Dinamik) -->
-                        <div class="row">
+                        <div class="row" id="manualParamsSection">
                             <!-- İlk Parametre Sütunu -->
                             <div class="col-md-4" id="model-params-container">
                                 <!-- Linear Regression Fit Intercept -->
@@ -250,6 +251,19 @@
                                            value="100" min="10" max="1000" step="10" disabled>
                                     <small class="form-text text-muted">
                                         Düşük değer (50): Hızlı, yüksek değer (500): Daha doğru ama yavaş
+                                    </small>
+                                </div>
+
+                                <!-- LightGBM N Estimators -->
+                                <div class="form-group" id="lgb-n-estimators-param" style="display: none;">
+                                    <label for="lgb_n_estimators_input">
+                                        <i class="fas fa-tree"></i>
+                                        N Estimators (Ağaç Sayısı)
+                                    </label>
+                                    <input type="number" name="" id="lgb_n_estimators_input" class="form-control" 
+                                           value="100" min="10" max="1000" step="10" disabled>
+                                    <small class="form-text text-muted">
+                                        Düşük değer (50): Hızlı, yüksek değer (500): Daha doğru
                                     </small>
                                 </div>
                             </div>
@@ -383,6 +397,19 @@
                                         Düşük değer (0.01): Yavaş öğrenme, yüksek değer (0.3): Hızlı öğrenme
                                     </small>
                                 </div>
+
+                                <!-- LightGBM Learning Rate -->
+                                <div class="form-group" id="lgb-learning-rate-param" style="display: none;">
+                                    <label for="lgb_learning_rate_input">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        Learning Rate (Öğrenme Hızı)
+                                    </label>
+                                    <input type="number" name="" id="lgb_learning_rate_input" class="form-control" 
+                                           value="0.1" min="0.01" max="1.0" step="0.01" disabled>
+                                    <small class="form-text text-muted">
+                                        Düşük değer (0.01): Yavaş öğrenme, yüksek değer (0.3): Hızlı öğrenme
+                                    </small>
+                                </div>
                             </div>
 
                             <!-- Üçüncü Parametre Sütunu -->
@@ -396,9 +423,23 @@
                                     <input type="number" name="" id="xgb_max_depth_input" class="form-control" 
                                            value="6" min="1" max="20" step="1" disabled>
                                     <small class="form-text text-muted">
-                                        Düşük değer (3): Basit model, yüksek değer (10): Karmaşık model
+                                        Düşük değer (3): Basit model, yüksek değer (15): Karmaşık model
                                     </small>
                                 </div>
+
+                                <!-- LightGBM Max Depth -->
+                                <div class="form-group" id="lgb-max-depth-param" style="display: none;">
+                                    <label for="lgb_max_depth_input">
+                                        <i class="fas fa-sitemap"></i>
+                                        Max Depth (Maksimum Derinlik)
+                                    </label>
+                                    <input type="number" name="" id="lgb_max_depth_input" class="form-control" 
+                                           value="-1" min="-1" max="20" step="1" disabled>
+                                    <small class="form-text text-muted">
+                                        -1: Sınırsız, düşük değer (5): Basit, yüksek değer (15): Karmaşık
+                                    </small>
+                                </div>
+
                             </div>
                         </div>
 
@@ -424,6 +465,54 @@
                         </div>
                         {% endif %}
 
+                        <!-- Otomatik Seçenekler -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <!-- En İyi Model Otomatik Seçimi -->
+                                <div class="card border-success mb-3">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="useAutoModelSelection" name="use_auto_model_selection">
+                                            <label class="form-check-label fw-bold" for="useAutoModelSelection">
+                                                <i class="fas fa-crown text-success"></i> En İyi Modeli ve Parametreleri Otomatik Bul (Tüm Algoritmalar)
+                                            </label>
+                                        </div>
+                                        <div class="form-check mt-2" id="detailedModeSection" style="display: none;">
+                                            <input class="form-check-input" type="checkbox" id="useDetailedMode" name="use_detailed_mode">
+                                            <label class="form-check-label" for="useDetailedMode">
+                                                <i class="fas fa-microscope text-warning"></i> <strong>Detaylı Mod</strong> (Daha kapsamlı parametre arama)
+                                            </label>
+                                            <div class="alert alert-warning mt-2 mb-0" style="font-size: 0.85em;">
+                                                <i class="fas fa-clock"></i> <strong>Uyarı:</strong> Detaylı mod <strong>5-10 dakika</strong> sürebilir! 
+                                                Daha fazla parametre kombinasyonu test ederek %5-15 daha iyi sonuç verebilir.
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            <strong>Tüm algoritmaları</strong> (Linear, Ridge, Lasso, ElasticNet, KNN, SVR, Decision Tree, Random Forest, XGBoost, LightGBM) 
+                                            test ederek en yüksek performansı veren modeli ve parametrelerini otomatik bulur. 
+                                            Bu seçenek aktifken model seçimi ve parametre girişi devre dışı kalır.
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- GridSearch Seçeneği -->
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="useGridSearch" name="use_grid_search">
+                                            <label class="form-check-label fw-bold" for="useGridSearch">
+                                                <i class="fas fa-magic text-primary"></i> Seçili Model İçin En İyi Parametreleri Bul (GridSearch)
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">
+                                            Seçili algoritma için farklı parametre kombinasyonları denenerek en iyi sonucu veren ayarlar otomatik bulunur. 
+                                            Bu seçenek aktifken manuel parametre girişi devre dışı kalır.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Butonlar -->
                         <div class="row mt-4">
                             <div class="col-12">
@@ -431,7 +520,7 @@
                                     <a href="{{ url_for('processing.select_columns', filename=filename) }}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left"></i> Geri
                                     </a>
-                                    <button type="submit" class="btn btn-success btn-lg">
+                                    <button type="submit" class="btn btn-success btn-lg" id="trainButton">
                                         <i class="fas fa-play"></i> Modeli Eğit
                                     </button>
                                 </div>
@@ -458,7 +547,8 @@ document.getElementById('model_type').addEventListener('change', function() {
         'svr': 'Güçlü ve esnek. Doğrusal olmayan ilişkiler için uygun.',
         'decision_tree': 'Anlaşılması kolay ama bazen kararsız.',
         'random_forest': 'Güçlü ve kararlı. Çoğu veri için iyi sonuç verir.',
-        'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.'
+        'xgboost': 'Çok güçlü ama yavaş. Yarışmalarda popüler.',
+        'lightgbm': 'Hızlı ve güçlü gradient boosting. XGBoost\'a alternatif.'
     };
     
     const selectedModel = this.value;
@@ -476,7 +566,8 @@ document.getElementById('model_type').addEventListener('change', function() {
         'svr-c-param', 'svr-gamma-param',
         'dt-max-depth-param', 'dt-min-samples-leaf-param',
         'rf-n-estimators-param', 'rf-max-depth-param',
-        'xgb-n-estimators-param', 'xgb-learning-rate-param', 'xgb-max-depth-param'
+        'xgb-n-estimators-param', 'xgb-learning-rate-param', 'xgb-max-depth-param',
+        'lgb-n-estimators-param', 'lgb-learning-rate-param', 'lgb-max-depth-param'
     ];
     
     const allInputs = [
@@ -488,7 +579,8 @@ document.getElementById('model_type').addEventListener('change', function() {
         'svr_c_input', 'svr_gamma_input',
         'dt_max_depth_input', 'dt_min_samples_leaf_input',
         'rf_n_estimators_input', 'rf_max_depth_input',
-        'xgb_n_estimators_input', 'xgb_learning_rate_input', 'xgb_max_depth_input'
+        'xgb_n_estimators_input', 'xgb_learning_rate_input', 'xgb_max_depth_input',
+        'lgb_n_estimators_input', 'lgb_learning_rate_input', 'lgb_max_depth_input'
     ];
     
     // Tüm parametreleri gizle ve devre dışı bırak
@@ -572,6 +664,101 @@ document.getElementById('model_type').addEventListener('change', function() {
         document.getElementById('xgb_n_estimators_input').disabled = false;
         document.getElementById('xgb_learning_rate_input').disabled = false;
         document.getElementById('xgb_max_depth_input').disabled = false;
+    } else if (selectedModel === 'lightgbm') {
+        document.getElementById('lgb-n-estimators-param').style.display = 'block';
+        document.getElementById('lgb-learning-rate-param').style.display = 'block';
+        document.getElementById('lgb-max-depth-param').style.display = 'block';
+        document.getElementById('lgb_n_estimators_input').name = 'n_estimators';
+        document.getElementById('lgb_learning_rate_input').name = 'learning_rate';
+        document.getElementById('lgb_max_depth_input').name = 'max_depth';
+        document.getElementById('lgb_n_estimators_input').disabled = false;
+        document.getElementById('lgb_learning_rate_input').disabled = false;
+        document.getElementById('lgb_max_depth_input').disabled = false;
+    }
+});
+
+// Auto Model Selection checkbox işlevi
+document.getElementById('useAutoModelSelection')?.addEventListener('change', function() {
+    const isAutoEnabled = this.checked;
+    const modelTypeSelect = document.getElementById('model_type');
+    const gridSearchCheckbox = document.getElementById('useGridSearch');
+    const manualParamsSection = document.getElementById('manualParamsSection');
+    const detailedModeSection = document.getElementById('detailedModeSection');
+    
+    if (isAutoEnabled) {
+        // Auto Model Selection aktifken tüm seçenekleri devre dışı bırak
+        modelTypeSelect.disabled = true;
+        modelTypeSelect.style.opacity = '0.5';
+        
+        gridSearchCheckbox.checked = false;
+        gridSearchCheckbox.disabled = true;
+        gridSearchCheckbox.parentElement.style.opacity = '0.5';
+        
+        manualParamsSection.style.opacity = '0.3';
+        manualParamsSection.style.pointerEvents = 'none';
+        
+        // Detaylı mod seçeneğini göster
+        detailedModeSection.style.display = 'block';
+        
+        // Tüm parametreleri gizle
+        const allParams = document.querySelectorAll('[id$="-param"]');
+        allParams.forEach(param => {
+            if (param) param.style.display = 'none';
+        });
+        
+    } else {
+        // Auto Model Selection kapatıldığında seçenekleri geri aç
+        modelTypeSelect.disabled = false;
+        modelTypeSelect.style.opacity = '1';
+        
+        gridSearchCheckbox.disabled = false;
+        gridSearchCheckbox.parentElement.style.opacity = '1';
+        
+        manualParamsSection.style.opacity = '1';
+        manualParamsSection.style.pointerEvents = 'auto';
+        
+        // Detaylı mod seçeneğini gizle
+        detailedModeSection.style.display = 'none';
+        document.getElementById('useDetailedMode').checked = false;
+        
+        // Seçili modelin parametrelerini göster
+        modelTypeSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// GridSearch checkbox işlevi
+document.getElementById('useGridSearch')?.addEventListener('change', function() {
+    const isGridSearchEnabled = this.checked;
+    const autoModelCheckbox = document.getElementById('useAutoModelSelection');
+    const manualParamsSection = document.getElementById('manualParamsSection');
+    
+    // Auto Model Selection aktifse GridSearch'ü engelle
+    if (autoModelCheckbox.checked) {
+        this.checked = false;
+        return;
+    }
+    
+    if (isGridSearchEnabled) {
+        // GridSearch aktifken manuel parametreleri devre dışı bırak
+        manualParamsSection.style.opacity = '0.5';
+        manualParamsSection.style.pointerEvents = 'none';
+        
+        // Tüm input'ları devre dışı bırak
+        const inputs = manualParamsSection.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.disabled = true;
+            input.removeAttribute('name'); // Form submit'te gönderilmesin
+        });
+    } else {
+        // Manuel parametreler aktif
+        manualParamsSection.style.opacity = '1';
+        manualParamsSection.style.pointerEvents = 'auto';
+        
+        // Mevcut model için gerekli input'ları aktif et
+        const modelSelect = document.getElementById('model_type');
+        if (modelSelect) {
+            modelSelect.dispatchEvent(new Event('change'));
+        }
     }
 });
 
@@ -582,5 +769,33 @@ document.addEventListener('DOMContentLoaded', function() {
         modelSelect.dispatchEvent(new Event('change'));
     }
 });
+
+// Model eğitimi form submit işlemi
+document.getElementById('trainForm')?.addEventListener('submit', function(e) {
+    // Yükleme ekranını göster
+    showTrainingLoading();
+    
+    // Butonu devre dışı bırak
+    const trainButton = document.getElementById('trainButton');
+    trainButton.disabled = true;
+    trainButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Model Eğitiliyor...';
+});
+
+// Model eğitimi yükleme ekranı
+function showTrainingLoading() {
+    const loadingHtml = `
+        <div class="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div class="text-center text-white">
+                <div class="spinner-border text-light mb-3" role="status" style="width: 4rem; height: 4rem;">
+                    <span class="visually-hidden">Eğitiliyor...</span>
+                </div>
+                <h4 class="mb-2">Model Eğitiliyor</h4>
+                <p class="mb-3">Bu işlem birkaç dakika sürebilir...</p>
+                <small class="text-muted mt-2 d-block">Lütfen sayfayı kapatmayın</small>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', loadingHtml);
+}
 </script>
 {% endblock %}

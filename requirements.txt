@@ -7,4 +7,5 @@ seaborn
 openpyxl
 xlrd
 xgboost
+lightgbm
 werkzeug
