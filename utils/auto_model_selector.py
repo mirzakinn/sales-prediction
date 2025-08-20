@@ -16,6 +16,8 @@ import numpy as np
 import time
 import sys
 import io
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+import signal
 
 # Windows konsol encoding sorunu için - print fonksiyonunu override et
 import builtins
@@ -37,7 +39,7 @@ def safe_print(*args, **kwargs):
 # print fonksiyonunu güvenli versiyonla değiştir
 builtins.print = safe_print
 
-def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=False):
+def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=False, max_time_per_model=300):
     """
     Tüm mevcut algoritmaları test ederek en iyi performansı veren modeli bulur.
     
@@ -48,6 +50,7 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
         y_test: Test verisi hedef değişkeni
         cv_folds: Cross-validation fold sayısı
         detailed_mode: Detaylı mod (daha fazla parametre kombinasyonu)
+        max_time_per_model: Her model için maksimum süre (saniye)
     
     Returns:
         dict: En iyi model bilgileri
@@ -57,18 +60,28 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
     n_samples = len(x_train)
     n_features = x_train.shape[1] if hasattr(x_train, 'shape') else len(x_train[0])
     
-    # Büyük dataset kategorilendirmesi
-    is_large_dataset = n_samples > 50000 or n_features > 20
-    is_huge_dataset = n_samples > 200000
+    # Büyük dataset kategorilendirmesi - daha agresif
+    is_large_dataset = n_samples > 30000 or n_features > 15
+    is_huge_dataset = n_samples > 100000 or n_features > 25
+    is_massive_dataset = n_samples > 300000
     
-    if is_huge_dataset:
-        print(f"ÇOK BÜYÜK DATASET TESPIT EDİLDİ: {n_samples:,} satır, {n_features} kolon")
-        print("Sampling + Ultra hızlı mod aktif - Tahmini süre: 5-8 dakika")
-        detailed_mode = False  # Zorla kapat
+    if is_massive_dataset:
+        print(f"🔥 ÇOK BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
+        print("⚡ ULTRA HIZLI MOD - Tahmini süre: 2-4 dakika")
+        detailed_mode = False
+        max_time_per_model = 120  # 2 dakika max
+        cv_folds = 2
+    elif is_huge_dataset:
+        print(f"📊 BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
+        print("🚀 HIZLI MOD - Tahmini süre: 3-6 dakika")
+        detailed_mode = False
+        max_time_per_model = 180  # 3 dakika max
+        cv_folds = 3
     elif is_large_dataset:
-        print(f"BÜYÜK DATASET TESPIT EDİLDİ: {n_samples:,} satır, {n_features} kolon")
-        print("Ultra hızlı mod aktif - Tahmini süre: 8-12 dakika")
-        detailed_mode = False  # Zorla kapat
+        print(f"📈 ORTA BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
+        print("⚡ OPTIMIZE MOD - Tahmini süre: 5-8 dakika")
+        detailed_mode = False
+        cv_folds = 3
     
     # Sampling fonksiyonu
     def smart_sample(x_train, y_train, x_test, y_test, sample_size=80000):
@@ -92,56 +105,39 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
         return x_train, y_train, x_test, y_test
     
     # Sampling uygula
-    if is_huge_dataset:
+    if is_huge_dataset or is_massive_dataset:
         x_train_work, y_train_work, x_test_work, y_test_work = smart_sample(
             x_train, y_train, x_test, y_test, sample_size=80000
         )
     else:
         x_train_work, y_train_work, x_test_work, y_test_work = x_train, y_train, x_test, y_test
     
+    # ULTRA HIZLI mod parametre gridleri (massive dataset için)
+    ultra_minimal_params = {
+        'linear_regression': {'fit_intercept': [True]},
+        'ridge': {'alpha': [1.0]},
+        'lasso': {'alpha': [1.0]},
+        'elasticnet': {'alpha': [1.0], 'l1_ratio': [0.5]},
+        'knn': {'n_neighbors': [5]},
+        'svr': {'C': [1.0], 'gamma': ['scale']},
+        'decision_tree': {'max_depth': [10]},
+        'random_forest': {'n_estimators': [50], 'max_depth': [10]},
+        'xgboost': {'n_estimators': [50], 'learning_rate': [0.1], 'max_depth': [6]},
+        'lightgbm': {'n_estimators': [50], 'learning_rate': [0.1], 'max_depth': [10]}
+    }
+    
     # Ultra hızlı mod parametre gridleri (büyük dataset için)
     ultra_fast_params = {
-        'linear_regression': {
-            'fit_intercept': [True, False]
-        },
-        'ridge': {
-            'alpha': [1.0, 10.0],
-            'solver': ['auto']
-        },
-        'lasso': {
-            'alpha': [1.0, 10.0],
-            'max_iter': [1000]
-        },
-        'elasticnet': {
-            'alpha': [1.0],
-            'l1_ratio': [0.5, 0.7]
-        },
-        'knn': {
-            'n_neighbors': [5, 10],
-            'weights': ['uniform']
-        },
-        'svr': {
-            'C': [1.0],
-            'gamma': ['scale']
-        },
-        'decision_tree': {
-            'max_depth': [10, 15],
-            'min_samples_leaf': [4]
-        },
-        'random_forest': {
-            'n_estimators': [50, 100],
-            'max_depth': [10]
-        },
-        'xgboost': {
-            'n_estimators': [50, 100],
-            'learning_rate': [0.1],
-            'max_depth': [6]
-        },
-        'lightgbm': {
-            'n_estimators': [50, 100],
-            'learning_rate': [0.1],
-            'max_depth': [10]
-        }
+        'linear_regression': {'fit_intercept': [True, False]},
+        'ridge': {'alpha': [1.0, 10.0]},
+        'lasso': {'alpha': [1.0, 10.0]},
+        'elasticnet': {'alpha': [1.0], 'l1_ratio': [0.5, 0.7]},
+        'knn': {'n_neighbors': [5, 10]},
+        'svr': {'C': [1.0], 'gamma': ['scale']},
+        'decision_tree': {'max_depth': [10, 15]},
+        'random_forest': {'n_estimators': [50, 100], 'max_depth': [10]},
+        'xgboost': {'n_estimators': [50, 100], 'learning_rate': [0.1], 'max_depth': [6]},
+        'lightgbm': {'n_estimators': [50, 100], 'learning_rate': [0.1], 'max_depth': [10]}
     }
     
     # Hızlı mod parametre gridleri
@@ -242,14 +238,22 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
         }
     }
     
-    # Parametre gridini seç
-    if is_large_dataset:
+    # Parametre gridini seç - daha agresif
+    if is_massive_dataset:
+        param_grids = ultra_minimal_params
+        cv_folds = 2
+        mode_text = "🔥 ULTRA MİNİMAL MOD (300K+ Dataset)"
+    elif is_huge_dataset:
         param_grids = ultra_fast_params
-        cv_folds = 3  # Büyük dataset için daha az CV fold
-        mode_text = "ULTRA HIZLI MOD (Büyük Dataset)"
+        cv_folds = 3
+        mode_text = "⚡ ULTRA HIZLI MOD (100K+ Dataset)"
+    elif is_large_dataset:
+        param_grids = ultra_fast_params
+        cv_folds = 3
+        mode_text = "🚀 HIZLI MOD (30K+ Dataset)"
     else:
         param_grids = detailed_params if detailed_mode else fast_params
-        mode_text = "DETAYLI MOD" if detailed_mode else "HIZLI MOD"
+        mode_text = "📊 DETAYLI MOD" if detailed_mode else "⚡ STANDART MOD"
     
     # Tüm modeller ve seçilen parametre gridleri
     models_config = {
@@ -295,18 +299,37 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
         }
     }
     
+    # Akıllı model sıralaması - hızlı modeller önce
+    model_order = [
+        'linear_regression',  # En hızlı
+        'ridge', 'lasso',     # Hızlı linear modeller
+        'decision_tree',      # Orta hızlı
+        'elasticnet',
+        'random_forest',      # Ensemble - orta
+        'lightgbm',          # Hızlı gradient boosting
+        'xgboost',           # Yavaş gradient boosting
+        'knn',               # Yavaş (büyük data için)
+        'svr'                # En yavaş
+    ]
+    
+    # Erken durma için baseline belirleme
+    baseline_r2 = -float('inf')
+    early_stop_threshold = 0.1  # R2 < 0.1 ise modeli atla
+    models_tested = 0
+    max_models_to_test = 6 if is_massive_dataset else 8 if is_huge_dataset else 10
+    
     results = []
+    total_start_time = time.time()
     
-    print(f"Tum modeller test ediliyor... ({mode_text})")
-    if detailed_mode and not is_large_dataset:
-        print("UYARI: Detayli mod 5-10 dakika surebilir!")
-    elif is_large_dataset:
-        print(f"CV Folds: {cv_folds} (hızlandırılmış)")
+    print(f"🎯 Model testi başlıyor... ({mode_text})")
+    print(f"⏱️  Model başına max süre: {max_time_per_model}s")
+    print(f"📊 CV Folds: {cv_folds}")
+    print(f"🔢 Test edilecek max model: {max_models_to_test}")
     
-    for model_name, config in models_config.items():
+    def train_single_model(model_name, config):
+        """Tek model eğitimi - timeout ile"""
         try:
             start_time = time.time()
-            print(f"{model_name} test ediliyor...")
             
             # GridSearchCV ile en iyi parametreleri bul
             grid_search = GridSearchCV(
@@ -324,12 +347,10 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
             best_model = grid_search.best_estimator_
             
             # Büyük dataset ise final modeli tam veri ile eğit
-            if is_huge_dataset:
-                print(f"  -> En iyi parametreler bulundu, tam dataset ile final eğitim...")
+            if is_huge_dataset or is_massive_dataset:
                 best_model.fit(x_train, y_train)
             
             y_pred = best_model.predict(x_test)
-            r2_score = best_model.score(x_test, y_test)
             
             # Performans metrikleri hesapla
             from sklearn.metrics import r2_score as r2_metric
@@ -338,16 +359,16 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
             mae = mean_absolute_error(y_test, y_pred)
             rmse = np.sqrt(mse)
             
-            # Cross-validation skoru (büyük dataset için sample kullan)
-            cv_data_x = x_train_work if is_huge_dataset else x_train
-            cv_data_y = y_train_work if is_huge_dataset else y_train
+            # Cross-validation skoru
+            cv_data_x = x_train_work if (is_huge_dataset or is_massive_dataset) else x_train
+            cv_data_y = y_train_work if (is_huge_dataset or is_massive_dataset) else y_train
             cv_scores = cross_val_score(best_model, cv_data_x, cv_data_y, cv=cv_folds, scoring='r2')
             cv_mean = cv_scores.mean()
             cv_std = cv_scores.std()
             
             elapsed_time = time.time() - start_time
             
-            result = {
+            return {
                 'model_name': model_name,
                 'model': best_model,
                 'best_params': grid_search.best_params_,
@@ -358,15 +379,74 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
                 'cv_mean': cv_mean,
                 'cv_std': cv_std,
                 'training_time': elapsed_time,
-                'predictions': y_pred
+                'predictions': y_pred,
+                'success': True
             }
             
-            results.append(result)
-            print(f"{model_name} tamamlandi - R2: {r2:.4f} ({elapsed_time:.2f}s)")
-            
         except Exception as e:
-            print(f"{model_name} hata: {str(e)}")
+            return {
+                'model_name': model_name,
+                'error': str(e),
+                'success': False
+            }
+    
+    # Modelleri sıralı olarak test et (erken durma ile)
+    for model_name in model_order:
+        if model_name not in models_config:
             continue
+            
+        if models_tested >= max_models_to_test:
+            print(f"⏹️  Maksimum model sayısına ulaşıldı ({max_models_to_test})")
+            break
+            
+        config = models_config[model_name]
+        try:
+            print(f"🔄 {model_name} test ediliyor... ({models_tested+1}/{max_models_to_test})")
+            
+            # Timeout ile model eğitimi
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(train_single_model, model_name, config)
+                try:
+                    result = future.result(timeout=max_time_per_model)
+                    
+                    if result['success']:
+                        r2_score = result['r2_score']
+                        
+                        # Erken durma kontrolü
+                        if r2_score < early_stop_threshold and models_tested > 2:
+                            print(f"❌ {model_name} çok düşük performans (R2: {r2_score:.4f}) - atlanıyor")
+                            continue
+                        
+                        results.append(result)
+                        models_tested += 1
+                        
+                        # Baseline güncelle
+                        if r2_score > baseline_r2:
+                            baseline_r2 = r2_score
+                        
+                        elapsed = result['training_time']
+                        print(f"✅ {model_name} tamamlandı - R2: {r2_score:.4f} ({elapsed:.1f}s)")
+                        
+                        # Çok iyi sonuç varsa erken bitir
+                        if r2_score > 0.95 and models_tested >= 3:
+                            print(f"🎉 Mükemmel sonuç bulundu (R2: {r2_score:.4f}) - erken bitiş")
+                            break
+                            
+                    else:
+                        print(f"❌ {model_name} hata: {result.get('error', 'Bilinmeyen hata')}")
+                        
+                except TimeoutError:
+                    print(f"⏰ {model_name} zaman aşımı ({max_time_per_model}s) - atlanıyor")
+                    future.cancel()
+                    continue
+                    
+        except Exception as e:
+            print(f"❌ {model_name} kritik hata: {str(e)}")
+            continue
+    
+    total_elapsed = time.time() - total_start_time
+    print(f"\n⏱️  Toplam süre: {total_elapsed:.1f} saniye")
+    print(f"🔢 Test edilen model sayısı: {len(results)}")
     
     # Sonuçları R² skoruna göre sırala (en yüksekten en düşüğe)
     results.sort(key=lambda x: x['r2_score'], reverse=True)
