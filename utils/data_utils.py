@@ -6,30 +6,10 @@ import pandas as pd
 import numpy as np
 
 def analyze_dataframe(df, filename):
-    """
-    DataFrame'i analiz eder ve detayları yazdırır
-    """
-    print("=" * 50, flush=True)
-    print("VERI ANALIZI BASLADI", flush=True)
-    print("=" * 50, flush=True)
-    print(f"Dosya basariyla okundu: {filename}", flush=True)
-    print(f"Veri boyutu: {df.shape[0]} satir, {df.shape[1]} sutun", flush=True)
-    print(f"Sutunlar: {list(df.columns)}", flush=True)
-    
-    # Sayısal kolonlar için temel istatistikler
+    """DataFrame'i analiz eder"""
     numeric_columns = df.select_dtypes(include=['number']).columns
-    if len(numeric_columns) > 0:
-        print(f"Sayisal kolonlar: {list(numeric_columns)}", flush=True)
-    
-    # Eksik veri kontrolü
     missing_data = df.isnull().sum()
-    if missing_data.any():
-        print("UYARI - Eksik veriler:", flush=True)
-        for col, count in missing_data.items():
-            if count > 0:
-                print(f"   {col}: {count} eksik", flush=True)
-    
-    print("=" * 50, flush=True)
+    return df
 
 def read_file_by_extension(filepath, filename):
     """Dosya uzantısına göre dosyayı okur ve hata yönetimi yapar"""
@@ -49,7 +29,6 @@ def read_file_by_extension(filepath, filename):
                         
                         # Eğer veri başarıyla okunduysa
                         if len(df.columns) > 1 and len(df) > 0:
-                            print(f"✅ CSV başarıyla okundu: encoding={encoding}, separator='{sep}'", flush=True)
                             return df
                     except Exception as e:
                         continue
@@ -63,7 +42,6 @@ def read_file_by_extension(filepath, filename):
             raise ValueError(f"Desteklenmeyen dosya formatı: {filename}")
             
     except Exception as e:
-        print(f"❌ Dosya okuma hatası: {str(e)}", flush=True)
         raise e
 
 # TODO: Buraya kendi veri işleme fonksiyonlarınızı ekleyebilirsiniz

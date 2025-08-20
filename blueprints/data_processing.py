@@ -1,15 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-import json
 import os
 import pandas as pd
-from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
-from utils.ml_utils import *
-from utils.linear_models import *
-from utils.tree_models import *
-from utils.other_models import *
-from utils.model_selector import *
-from database.crud import *
-from utils.file_utils import save_model_files, allowed_file
+from utils.data_utils import read_file_by_extension
 
 CURRENT_MODEL = None
 CURRENT_ENCODERS = None
@@ -29,7 +21,6 @@ def select_columns(filename):
             return redirect(url_for('upload.upload_file'))
         
         # CSV dosyasını oku ve kolonları al
-        from utils.data_utils import read_file_by_extension
         df = read_file_by_extension(filepath, filename)
         
         # Boş DataFrame kontrolü
@@ -83,7 +74,7 @@ def select_columns(filename):
                              df_shape=df.shape)
         
     except Exception as e:
-        print(f"Select columns error: {str(e)}", flush=True)
+        pass
         flash(f'Dosya işleme hatası: {str(e)}', 'error')
         return redirect(url_for('upload.upload_file'))
 

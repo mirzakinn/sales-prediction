@@ -6,7 +6,6 @@ from utils.ml_utils import *
 from utils.linear_models import *
 from utils.tree_models import *
 from utils.other_models import *
-from utils.model_selector import select_model
 from utils.auto_model_selector import find_best_model, get_model_comparison_summary, get_model_display_name
 from database.crud import *
 from utils.file_utils import save_model_files
@@ -173,7 +172,7 @@ def train_model():
             
             # Karşılaştırma özetini konsola yazdır (flash mesajı yok)
             comparison_summary = get_model_comparison_summary(best_result)
-            print(f"Secilen en iyi model: {get_model_display_name(model_type)} - R2: {score:.4f}")
+            pass
             
         else:
             # Normal model eğitimi (mevcut kod)

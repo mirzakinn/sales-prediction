@@ -57,7 +57,7 @@ def upload_file():
                 return redirect(url_for('upload.upload_file'))
                 
         except Exception as e:
-            print(f"Upload hatası: {str(e)}")
+            pass
             flash(f'Dosya yükleme hatası: {str(e)}', 'error')
             return redirect(url_for('upload.upload_file'))
     

@@ -33,10 +33,8 @@ def init_database():
         conn.executescript(schema_sql)
         conn.close()
         
-        print("✅ Veritabanı başarıyla oluşturuldu!")
         return True
     except Exception as e:
-        print(f"❌ Veritabanı oluşturma hatası: {e}")
         return False
 
 
@@ -80,14 +78,11 @@ def get_db_connection():
         # Database hatası varsa rollback yap
         if conn:
             conn.rollback()
-        print(f"Database error: {e}")
-        raise  # Hatayı yukarı fırlat
+        raise
         
     except Exception as e:
-        # Genel hata varsa rollback yap
         if conn:
             conn.rollback()
-        print(f"General error: {e}")
         raise
         
     finally:
@@ -108,10 +103,8 @@ def test_connection():
             cursor = conn.cursor()
             cursor.execute("SELECT 1 as test_value")
             result = cursor.fetchone()
-            print(f"✅ Database bağlantısı başarılı: {result['test_value']}")
             return True
     except Exception as e:
-        print(f"❌ Database bağlantı hatası: {e}")
         return False
 
 
@@ -145,7 +138,6 @@ def get_database_info():
             
             return info
     except Exception as e:
-        print(f"❌ Database bilgi alma hatası: {e}")
         return {
             'database_path': DB_PATH,
             'database_exists': False,
@@ -155,26 +147,6 @@ def get_database_info():
 
 # Test fonksiyonu - dosya direkt çalıştırıldığında test yapar
 if __name__ == "__main__":
-    print("Database modulu test ediliyor...")
-    
-    # 1. Database'i başlat
-    print("\n1. Database baslatiliyor...")
-    if init_database():
-        print("   init_database() basarili")
-    else:
-        print("   init_database() basarisiz")
-    
-    # 2. Bağlantıyı test et
-    print("\n2. Baglanti test ediliyor...")
-    if test_connection():
-        print("   test_connection() basarili")
-    else:
-        print("   test_connection() basarisiz")
-    
-    # 3. Database bilgilerini göster
-    print("\n3. Database bilgileri:")
-    info = get_database_info()
-    for key, value in info.items():
-        print(f"   {key}: {value}")
-    
-    print("\nTest tamamlandi!")
+    init_database()
+    test_connection()
+    get_database_info()

@@ -19,25 +19,6 @@ import io
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import signal
 
-# Windows konsol encoding sorunu için - print fonksiyonunu override et
-import builtins
-original_print = builtins.print
-
-def safe_print(*args, **kwargs):
-    try:
-        original_print(*args, **kwargs)
-    except UnicodeEncodeError:
-        # Unicode karakterleri ASCII'ye çevir
-        safe_args = []
-        for arg in args:
-            if isinstance(arg, str):
-                safe_args.append(arg.encode('ascii', 'ignore').decode('ascii'))
-            else:
-                safe_args.append(str(arg))
-        original_print(*safe_args, **kwargs)
-
-# print fonksiyonunu güvenli versiyonla değiştir
-builtins.print = safe_print
 
 def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=False, max_time_per_model=300):
     """
@@ -66,20 +47,14 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
     is_massive_dataset = n_samples > 300000
     
     if is_massive_dataset:
-        print(f"🔥 ÇOK BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
-        print("⚡ ULTRA HIZLI MOD - Tahmini süre: 2-4 dakika")
         detailed_mode = False
-        max_time_per_model = 120  # 2 dakika max
+        max_time_per_model = 120
         cv_folds = 2
     elif is_huge_dataset:
-        print(f"📊 BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
-        print("🚀 HIZLI MOD - Tahmini süre: 3-6 dakika")
         detailed_mode = False
-        max_time_per_model = 180  # 3 dakika max
+        max_time_per_model = 180
         cv_folds = 3
     elif is_large_dataset:
-        print(f"📈 ORTA BÜYÜK DATASET: {n_samples:,} satır, {n_features} kolon")
-        print("⚡ OPTIMIZE MOD - Tahmini süre: 5-8 dakika")
         detailed_mode = False
         cv_folds = 3
     
@@ -88,19 +63,13 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
         from sklearn.model_selection import train_test_split
         
         if len(x_train) > sample_size:
-            print(f"Hızlı model karşılaştırması için {sample_size:,} satır sample alınıyor...")
             x_sample, _, y_sample, _ = train_test_split(
-                x_train, y_train, 
-                train_size=sample_size, 
-                random_state=42, 
-                stratify=None
+                x_train, y_train, train_size=sample_size, random_state=42
             )
-            # Test setini de orantılı küçült
             test_ratio = min(0.3, 20000 / len(x_test))
             x_test_sample, _, y_test_sample, _ = train_test_split(
                 x_test, y_test, train_size=test_ratio, random_state=42
             )
-            print(f"Sample boyutu: Eğitim {len(x_sample):,}, Test {len(x_test_sample):,}")
             return x_sample, y_sample, x_test_sample, y_test_sample
         return x_train, y_train, x_test, y_test
     
@@ -321,10 +290,6 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
     results = []
     total_start_time = time.time()
     
-    print(f"🎯 Model testi başlıyor... ({mode_text})")
-    print(f"⏱️  Model başına max süre: {max_time_per_model}s")
-    print(f"📊 CV Folds: {cv_folds}")
-    print(f"🔢 Test edilecek max model: {max_models_to_test}")
     
     def train_single_model(model_name, config):
         """Tek model eğitimi - timeout ile"""
@@ -396,12 +361,10 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
             continue
             
         if models_tested >= max_models_to_test:
-            print(f"⏹️  Maksimum model sayısına ulaşıldı ({max_models_to_test})")
             break
             
         config = models_config[model_name]
         try:
-            print(f"🔄 {model_name} test ediliyor... ({models_tested+1}/{max_models_to_test})")
             
             # Timeout ile model eğitimi
             with ThreadPoolExecutor(max_workers=1) as executor:
@@ -414,7 +377,6 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
                         
                         # Erken durma kontrolü
                         if r2_score < early_stop_threshold and models_tested > 2:
-                            print(f"❌ {model_name} çok düşük performans (R2: {r2_score:.4f}) - atlanıyor")
                             continue
                         
                         results.append(result)
@@ -425,28 +387,22 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
                             baseline_r2 = r2_score
                         
                         elapsed = result['training_time']
-                        print(f"✅ {model_name} tamamlandı - R2: {r2_score:.4f} ({elapsed:.1f}s)")
                         
                         # Çok iyi sonuç varsa erken bitir
                         if r2_score > 0.95 and models_tested >= 3:
-                            print(f"🎉 Mükemmel sonuç bulundu (R2: {r2_score:.4f}) - erken bitiş")
                             break
                             
                     else:
-                        print(f"❌ {model_name} hata: {result.get('error', 'Bilinmeyen hata')}")
+                        pass
                         
                 except TimeoutError:
-                    print(f"⏰ {model_name} zaman aşımı ({max_time_per_model}s) - atlanıyor")
                     future.cancel()
                     continue
                     
         except Exception as e:
-            print(f"❌ {model_name} kritik hata: {str(e)}")
             continue
     
     total_elapsed = time.time() - total_start_time
-    print(f"\n⏱️  Toplam süre: {total_elapsed:.1f} saniye")
-    print(f"🔢 Test edilen model sayısı: {len(results)}")
     
     # Sonuçları R² skoruna göre sırala (en yüksekten en düşüğe)
     results.sort(key=lambda x: x['r2_score'], reverse=True)
@@ -456,10 +412,6 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
     
     best_result = results[0]
     
-    print(f"\nEN IYI MODEL: {best_result['model_name']}")
-    print(f"R2 Skoru: {best_result['r2_score']:.4f}")
-    print(f"Cross-Validation: {best_result['cv_mean']:.4f} (+-{best_result['cv_std']:.4f})")
-    print(f"En Iyi Parametreler: {best_result['best_params']}")
     
     # Tüm sonuçları da döndür (karşılaştırma için)
     best_result['all_results'] = results

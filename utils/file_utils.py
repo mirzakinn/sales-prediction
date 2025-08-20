@@ -50,11 +50,6 @@ def save_model_files(model_id, model_obj, encoders_obj, scaler_obj):
     joblib.dump(encoders_obj, encoder_file)  
     joblib.dump(scaler_obj, scaler_file)
     
-    print(f"✅ Model dosyaları kaydedildi:")
-    print(f"   Model: {model_file}")
-    print(f"   Encoder: {encoder_file}")
-    print(f"   Scaler: {scaler_file}")
-    
     return {
         'model_path': str(model_file),
         'encoder_path': str(encoder_file),
@@ -79,30 +74,14 @@ def load_model_files(model_id):
         encoder_file = base_path / 'encoders' / f'encoder_{model_id}.pkl'  
         scaler_file = base_path / 'scalers' / f'scaler_{model_id}.pkl'
         
-        print(f"Model dosyalari kontrol ediliyor (ID: {model_id})")
-        print(f"   Model file: {model_file} - Exists: {model_file.exists()}")
-        print(f"   Encoder file: {encoder_file} - Exists: {encoder_file.exists()}")
-        print(f"   Scaler file: {scaler_file} - Exists: {scaler_file.exists()}")
-        
         # Dosyaların varlığını kontrol et
         if not all([model_file.exists(), encoder_file.exists(), scaler_file.exists()]):
-            print(f"HATA - Model dosyalari bulunamadi (ID: {model_id})")
-            missing_files = []
-            if not model_file.exists(): missing_files.append("model")
-            if not encoder_file.exists(): missing_files.append("encoder") 
-            if not scaler_file.exists(): missing_files.append("scaler")
-            print(f"   Eksik dosyalar: {missing_files}")
             return None
         
         # Dosyaları yükle
         model_obj = joblib.load(model_file)
         encoders_obj = joblib.load(encoder_file)
         scaler_obj = joblib.load(scaler_file)
-        
-        print(f"✅ Model dosyaları yüklendi (ID: {model_id})")
-        print(f"   Model: {type(model_obj).__name__}")
-        print(f"   Encoders: {len(encoders_obj)} adet") 
-        print(f"   Scaler: {type(scaler_obj).__name__}")
         
         return {
             'model': model_obj,
@@ -111,5 +90,5 @@ def load_model_files(model_id):
         }
         
     except Exception as e:
-        print(f"❌ Model yükleme hatası (ID: {model_id}): {e}")
+        pass
         return None

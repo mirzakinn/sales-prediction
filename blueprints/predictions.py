@@ -1,15 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import json
-import os
 import pandas as pd
-from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
-from utils.ml_utils import *
-from utils.linear_models import *
-from utils.tree_models import *
-from utils.other_models import *
-from utils.model_selector import *
-from database.crud import *
-from utils.file_utils import save_model_files, allowed_file
+from database.crud import get_model_by_id
 
 CURRENT_MODEL = None
 CURRENT_ENCODERS = None
@@ -54,7 +46,6 @@ def make_prediction():
                 # PREDICTION MODE: Seçilen modeli kullan
                 prediction_model = session.get('prediction_model')
                 
-                print(f"Prediction model from session: {prediction_model}")
                 
                 if not prediction_model:
                     flash('Tahmin modeli bulunamadı!', 'error')
@@ -64,7 +55,6 @@ def make_prediction():
                 from utils.file_utils import load_model_files
                 model_objects = load_model_files(prediction_model['id'])
                 
-                print(f"Model objects loaded: {model_objects is not None}")
                 
                 if not model_objects:
                     flash('Model dosyaları yüklenemedi!', 'error')
@@ -81,14 +71,12 @@ def make_prediction():
                 prediction = model.predict(input_scaled)[0]
             else:
                 # Normal eğitimden sonra tahmin yapma - Model ID'sinden dosya yükle
-                print("Using current session trained model")
                 
                 # Önce session'dan model ID'sini almaya çalış
                 current_model_id = session.get('current_model_id')
                 current_model_ready = session.get('current_model_ready', False)
                 
                 if current_model_id and current_model_ready:
-                    print(f"Loading model objects from files (ID: {current_model_id})")
                     
                     # Model dosyalarından yükle
                     from utils.file_utils import load_model_files
@@ -124,12 +112,6 @@ def make_prediction():
                         return redirect(url_for('upload.upload_file'))
                     
                 elif CURRENT_MODEL is not None and CURRENT_ENCODERS is not None and CURRENT_SCALER is not None:
-                    print("Using global variables as fallback")
-                    
-                    # Global değişkenleri fallback olarak kullan
-                    print(f"CURRENT_MODEL exists: {CURRENT_MODEL is not None}")
-                    print(f"CURRENT_ENCODERS exists: {CURRENT_ENCODERS is not None}")
-                    print(f"CURRENT_SCALER exists: {CURRENT_SCALER is not None}")
                     
                     # Kullanıcı verisini DataFrame'e çevir ve işle
                     input_df = pd.DataFrame([prediction_data])
@@ -179,12 +161,8 @@ def make_prediction_new():
     Yeni tahmin sayfası - seçili modelle direkt tahmin yapar
     Veri yükleme ve kolon seçme adımlarını atlar
     """
-    print("make_prediction_new route called!")
-    print(f"Request method: {request.method}")
     
     if request.method == 'POST':
-        print("POST request received!")
-        print(f"Form data: {request.form.to_dict()}")
         
         try:
             # Form'dan model ID'sini al
@@ -202,8 +180,6 @@ def make_prediction_new():
                 return redirect(url_for('management.results'))
             
             # Debug: feature_columns'u kontrol et
-            print(f"Raw feature_columns: {model_info['feature_columns']}")
-            print(f"Type: {type(model_info['feature_columns'])}")
             
             # Feature kolonlarını güvenli şekilde parse et
             feature_columns_raw = model_info['feature_columns']
@@ -227,7 +203,6 @@ def make_prediction_new():
             else:
                 feature_columns = []
             
-            print(f"Parsed feature_columns: {feature_columns}")
             
             # Model bilgilerini hazırla (make_prediction template'i için)
             model_info_for_template = {
@@ -264,9 +239,7 @@ def make_prediction_new():
                                  feature_columns=feature_columns)
                                  
         except Exception as e:
-            print(f"Make prediction new hatası: {e}")
-            import traceback
-            traceback.print_exc()
+            pass
             flash(f'Model yükleme hatası: {str(e)}', 'error')
             return redirect(url_for('management.results'))
     

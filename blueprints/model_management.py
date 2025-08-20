@@ -1,15 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-import json
 import os
-import pandas as pd
-from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
-from utils.ml_utils import *
-from utils.linear_models import *
-from utils.tree_models import *
-from utils.other_models import *
-from utils.model_selector import *
-from database.crud import *
-from utils.file_utils import save_model_files, allowed_file
+from database.crud import get_all_models, get_model_by_id, delete_model
 
 CURRENT_MODEL = None
 CURRENT_ENCODERS = None
@@ -62,14 +53,11 @@ def delete_model_route(model_id):
                 os.remove(file_path)
                 deleted_files.append(file_path.name)
         
-        print(f"Model silindi - ID: {model_id}")
-        print(f"Silinen dosyalar: {deleted_files}")
         
         flash(f'Model başarıyla silindi! (ID: {model_id})', 'success')
         return redirect(url_for('management.results'))
         
     except Exception as e:
-        print(f"Model silme hatası: {e}")
         flash(f'Model silinirken hata oluştu: {str(e)}', 'error')
         return redirect(url_for('management.results'))
     
