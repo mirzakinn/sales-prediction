@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
 from utils.ml_utils import *
+from utils.model_selector import select_model
 from utils.linear_models import *
 from utils.tree_models import *
 from utils.other_models import *
