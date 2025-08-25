@@ -38,7 +38,7 @@ def upload_file():
                 filepath = os.path.join('storage/uploads', filename)
                 file.save(filepath)
                 
-                # Dosya türüne göre okuma
+                # Dosya türüne göre !!!!!!!!!!!!!!!!!!!!!!!!!okuma buraya bak
                 try:
                     df = read_file_by_extension(filepath, filename)
                     

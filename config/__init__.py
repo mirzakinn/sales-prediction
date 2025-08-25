@@ -58,13 +58,13 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True  # Development'ta SQL sorgularını görmek için
 
 class ProductionConfig(Config):
-    """Prodüksiyon ortamı yapılandırması"""
+    """Prodüksiyon ortamı Ayapılandırması"""
     DEBUG = False
     HOST = '0.0.0.0'
     PORT = int(os.environ.get('PORT', 5000))
     
     # Production database (PostgreSQL veya MySQL)
-    DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///sales_prediction_prod.db'
+    DATABASE_URL = os.environ.get('DATABSE_URL') or 'sqlite:///sales_prediction_prod.db'
     
     # Production için SQLAlchemy ayarları
     SQLALCHEMY_TRACK_MODIFICATIONS = False

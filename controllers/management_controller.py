@@ -1,10 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-import os
 from models.database.crud import get_all_models, get_model_by_id, delete_model
-
-CURRENT_MODEL = None
-CURRENT_ENCODERS = None
-CURRENT_SCALER = None
+from services.model_service import ModelService
 
 management_bp = Blueprint('management', __name__)
 
@@ -16,7 +12,18 @@ def results():
 
     model_results = get_all_models()
     
-    return render_template('results_new.html', results=model_results)
+    return render_template('results.html', models=model_results)
+
+@management_bp.route('/reset-all-models', methods=['POST'])
+def reset_all_models():
+    """Tüm eğitilmiş modelleri siler"""
+    try:
+        deleted_count = ModelService.reset_all_models()
+        flash(f'Tüm modeller başarıyla silindi! {deleted_count} model dosyası temizlendi.', 'success')
+    except Exception as e:
+        flash(f'Model silme işlemi sırasında hata oluştu: {str(e)}', 'error')
+    
+    return redirect(url_for('management.results'))
 
 @management_bp.route('/delete-model/<int:model_id>', methods=['POST'])
 def delete_model_route(model_id):

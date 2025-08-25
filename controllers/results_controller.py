@@ -4,12 +4,6 @@ Veri yükleme → Kolon seçimi → Model eğitimi → Tahmin yapma akışı
 """
 from flask import Blueprint, render_template, request
 from models.database.crud import get_all_models
-from datetime import datetime
-
-# Global değişkenler - eğitilen model objeleri
-CURRENT_MODEL = None
-CURRENT_ENCODERS = None
-CURRENT_SCALER = None
 
 results_bp = Blueprint('results', __name__)
 

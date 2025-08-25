@@ -1,10 +1,13 @@
 """Model eğitimi ve yönetimi servisleri"""
 
+import sqlite3
+from pathlib import Path
 from models.ml_models.model_selector import select_model
 from utils.auto_model_selector import find_best_model
 from utils.ml_utils import analyze_model
 from utils.file_utils import save_model_files
 from models.database.crud import save_trained_model
+from utils import globals
 
 class ModelService:
     """Model eğitimi ve yönetimi işlemlerini yöneten servis sınıfı"""
@@ -82,3 +85,57 @@ class ModelService:
         )
         
         return model_id, file_paths
+    
+    @staticmethod
+    def reset_all_models():
+        """Tüm eğitilmiş modelleri siler ve ID'leri sıfırlar"""
+        
+        # Global değişkenleri temizle
+        globals.CURRENT_MODEL = None
+        globals.CURRENT_ENCODERS = None
+        globals.CURRENT_SCALER = None
+        
+        # Database bağlantısı
+        conn = sqlite3.connect('sales_prediction.db')
+        cursor = conn.cursor()
+        
+        try:
+            # Tabloları temizle
+            cursor.execute('DELETE FROM trained_models')
+            cursor.execute('DELETE FROM model_files') 
+            cursor.execute('DELETE FROM training_sessions')
+            
+            # AUTOINCREMENT sayaçlarını sıfırla
+            cursor.execute('DELETE FROM sqlite_sequence WHERE name IN ("trained_models", "model_files", "training_sessions")')
+            
+            conn.commit()
+            
+        except Exception as e:
+            raise Exception(f"Database temizleme hatası: {e}")
+        finally:
+            conn.close()
+        
+        # Model dosyalarını sil
+        storage_path = Path('storage')
+        deleted_count = 0
+        
+        # Models klasörü
+        models_path = storage_path / 'models'
+        if models_path.exists():
+            for file in models_path.glob('*.pkl'):
+                file.unlink()
+                deleted_count += 1
+        
+        # Encoders klasörü
+        encoders_path = storage_path / 'encoders'
+        if encoders_path.exists():
+            for file in encoders_path.glob('*.pkl'):
+                file.unlink()
+        
+        # Scalers klasörü  
+        scalers_path = storage_path / 'scalers'
+        if scalers_path.exists():
+            for file in scalers_path.glob('*.pkl'):
+                file.unlink()
+        
+        return deleted_count

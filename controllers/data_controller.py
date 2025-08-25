@@ -3,10 +3,6 @@ import os
 import pandas as pd
 from utils.data_utils import read_file_by_extension
 
-CURRENT_MODEL = None
-CURRENT_ENCODERS = None
-CURRENT_SCALER = None
-
 processing_bp = Blueprint('processing', __name__)
 
 @processing_bp.route('/select-columns/<filename>')

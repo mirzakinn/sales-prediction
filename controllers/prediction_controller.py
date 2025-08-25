@@ -2,10 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import json
 import pandas as pd
 from models.database.crud import get_model_by_id
-
-CURRENT_MODEL = None
-CURRENT_ENCODERS = None
-CURRENT_SCALER = None
+from utils import globals
 
 prediction_bp = Blueprint('prediction', __name__)
 
@@ -111,27 +108,27 @@ def make_prediction():
                         flash('Model dosyaları yüklenemedi!', 'error')
                         return redirect(url_for('upload.upload_file'))
                     
-                elif CURRENT_MODEL is not None and CURRENT_ENCODERS is not None and CURRENT_SCALER is not None:
+                elif globals.CURRENT_MODEL is not None:
                     
                     # Kullanıcı verisini DataFrame'e çevir ve işle
                     input_df = pd.DataFrame([prediction_data])
                     
                     # Kategorik kolonları encode et
                     for col in input_df.columns:
-                        if col in CURRENT_ENCODERS:
+                        if col in globals.CURRENT_ENCODERS:
                             try:
-                                input_df[col] = CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
+                                input_df[col] = globals.CURRENT_ENCODERS[col].transform([str(prediction_data[col])])[0]
                             except:
                                 # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
-                                most_common = CURRENT_ENCODERS[col].classes_[0]
-                                input_df[col] = CURRENT_ENCODERS[col].transform([most_common])[0]
+                                most_common = globals.CURRENT_ENCODERS[col].classes_[0]
+                                input_df[col] = globals.CURRENT_ENCODERS[col].transform([most_common])[0]
                     
                     # Feature'ları doğru sırayla al ve scale et
                     feature_values = input_df[trained_model['feature_columns']].values
-                    input_scaled = CURRENT_SCALER.transform(feature_values)
+                    input_scaled = globals.CURRENT_SCALER.transform(feature_values)
                     
                     # Tahmin yap
-                    prediction = CURRENT_MODEL.predict(input_scaled)[0]
+                    prediction = globals.CURRENT_MODEL.predict(input_scaled)[0]
                 else:
                     flash('Model objeleri bulunamadı. Lütfen önce bir model eğitin.', 'error')
                     return redirect(url_for('upload.upload_file'))

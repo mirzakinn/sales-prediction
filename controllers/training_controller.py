@@ -5,11 +5,8 @@ from services.data_service import DataService
 from services.model_service import ModelService
 from utils.data_utils import read_file_by_extension
 from models.database.crud import *
+from utils import globals
 
-# Global değişkenleri burada tanımla
-CURRENT_MODEL = None
-CURRENT_ENCODERS = None
-CURRENT_SCALER = None
 
 training_bp = Blueprint('training', __name__)
 
@@ -77,13 +74,8 @@ def configure_model():
                 'percentage': round((missing_count / len(df)) * 100, 2)
             }
         
-        return render_template('configure_model.html',
-                             filename=filename,
-                             target_column=target_column,
-                             feature_columns=feature_columns,
-                             missing_data=missing_data,
-                             total_rows=len(df),
-                             prediction_mode=False)
+        return redirect(url_for('training.configure_model'))
+
         
     except Exception as e:
         flash(f'Hata oluştu: {str(e)}', 'error')
@@ -148,10 +140,10 @@ def train_model():
                 model_type, model_params, use_grid_search
             )
         
-        # Global değişkenlere ata
-        CURRENT_MODEL = result['model']
-        CURRENT_ENCODERS = processed_data['encoders']
-        CURRENT_SCALER = processed_data['scaler']
+        # Set global variables
+        globals.CURRENT_MODEL = result['model']
+        globals.CURRENT_ENCODERS = processed_data['encoders']
+        globals.CURRENT_SCALER = processed_data['scaler']
         
         # Model performansı
         model_performance = result['performance']

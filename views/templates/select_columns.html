@@ -62,9 +62,7 @@
                                         <option value="">Hedef kolonunu seçin...</option>
                                         {% for col in columns %}
                                         {% if column_types[col] == 'sayısal' %}
-                                        <option value="{{ col }}">{{ col }} 
-                                            <span class="badge bg-success">{{ column_types[col] }}</span>
-                                        </option>
+                                        <option value="{{ col }}">{{ col }}</option>
                                         {% endif %}
                                         {% endfor %}
                                     </select>

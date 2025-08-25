@@ -4,6 +4,7 @@ Dosya işlemleri için yardımcı fonksiyonlar
 import os
 import joblib
 from pathlib import Path
+from config import DevelopmentConfig
 
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
 UPLOAD_FOLDER = 'storage/uploads'
@@ -31,7 +32,7 @@ def save_model_files(model_id, model_obj, encoders_obj, scaler_obj):
         dict: Kaydedilen dosya yolları
     """
     # Storage klasörleri oluştur (yoksa)
-    base_path = Path(__file__).parent.parent / 'storage'
+    base_path = DevelopmentConfig.STORAGE_BASE_PATH
     models_path = base_path / 'models'
     encoders_path = base_path / 'encoders'
     scalers_path = base_path / 'scalers'
