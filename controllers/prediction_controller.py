@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import json
 import pandas as pd
-from database.crud import get_model_by_id
+from models.database.crud import get_model_by_id
 
 CURRENT_MODEL = None
 CURRENT_ENCODERS = None

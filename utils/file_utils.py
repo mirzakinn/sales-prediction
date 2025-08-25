@@ -6,6 +6,7 @@ import joblib
 from pathlib import Path
 
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
+UPLOAD_FOLDER = 'storage/uploads'
 
 def allowed_file(filename):
     """Dosya uzantısının izin verilen türde olup olmadığını kontrol eder"""

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import os
-from database.crud import get_all_models, get_model_by_id, delete_model
+from models.database.crud import get_all_models, get_model_by_id, delete_model
 
 CURRENT_MODEL = None
 CURRENT_ENCODERS = None

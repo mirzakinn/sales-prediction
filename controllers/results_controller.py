@@ -3,7 +3,7 @@ Sonuçlar Blueprint'i - Kullanıcı Odaklı ML Pipeline
 Veri yükleme → Kolon seçimi → Model eğitimi → Tahmin yapma akışı
 """
 from flask import Blueprint, render_template, request
-from database.crud import get_all_models
+from models.database.crud import get_all_models
 from datetime import datetime
 
 # Global değişkenler - eğitilen model objeleri

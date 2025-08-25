@@ -29,13 +29,13 @@ def upload_file():
             
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                upload_folder = 'uploads'
+                upload_folder = 'storage/uploads'
                 
                 # Upload klasörü yoksa oluştur
                 if not os.path.exists(upload_folder):
                     os.makedirs(upload_folder)
                 
-                filepath = os.path.join(upload_folder, filename)
+                filepath = os.path.join('storage/uploads', filename)
                 file.save(filepath)
                 
                 # Dosya türüne göre okuma

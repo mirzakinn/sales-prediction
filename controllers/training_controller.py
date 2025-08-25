@@ -1,15 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import pandas as pd
 import os
-from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
-from utils.ml_utils import *
-from utils.model_selector import select_model
-from utils.linear_models import *
-from utils.tree_models import *
-from utils.other_models import *
-from utils.auto_model_selector import find_best_model, get_model_comparison_summary, get_model_display_name
-from database.crud import *
-from utils.file_utils import save_model_files
+from services.data_service import DataService
+from services.model_service import ModelService
+from utils.data_utils import read_file_by_extension
+from models.database.crud import *
 
 # Global değişkenleri burada tanımla
 CURRENT_MODEL = None
@@ -35,7 +30,7 @@ def configure_model():
             return redirect(url_for('upload.upload_file'))
         
         # Eksik veri analizini tekrar yap
-        filepath = os.path.join('uploads', filename)
+        filepath = os.path.join('storage/uploads', filename)
         df = pd.read_csv(filepath)
         
         missing_data = {}
@@ -70,7 +65,7 @@ def configure_model():
         
         # NORMAL MODE: Veri ön işleme için gerekli bilgileri hazırla
         filename = session.get('current_file')
-        filepath = os.path.join('uploads', filename)
+        filepath = os.path.join('storage/uploads', filename)
         df = pd.read_csv(filepath)
         
         # Seçilen kolonlardaki eksik veri sayısını hesapla
@@ -129,62 +124,43 @@ def train_model():
         target_column = session.get('target_column')
         feature_columns = session.get('feature_columns')
 
-        filepath = os.path.join('uploads', filename)       
+        filepath = os.path.join('storage/uploads', filename)       
         df = read_file_by_extension(filepath, filename)
 
-        # Seçilen kolonları filtrele
-        selected_columns = [target_column] + feature_columns
-        df_filtered = df[selected_columns].copy()
-        
-        # Eksik verileri işle
-        df_processed = handle_missing_data(
-        df_filtered, 
-        method=handle_missing,
-        target_column=target_column
+        # Veri işleme - DataService kullan
+        processed_data = DataService.process_uploaded_file(
+            filepath, filename, target_column, feature_columns,
+            handle_missing=handle_missing, test_size=test_size
         )
         
-        df_processed = handle_outliers(
-        df_processed,
-        columns=selected_columns
-        )
-
-        # Otomatik model seçimi için model_type kontrolünü atla
-        if not use_auto_model_selection and not all([filename, target_column, feature_columns, model_type]):
-            flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
-            return redirect(url_for('upload.upload_file'))
-        elif use_auto_model_selection and not all([filename, target_column, feature_columns]):
-            flash('Eksik bilgiler var! Lütfen baştan başlayın.', 'error')
-            return redirect(url_for('upload.upload_file'))
-
-
-        df_processed, encoders = encoding_data(df_processed)
-        _, x, y, scaler = scaling_data(df_processed,feature_columns, target_column)
-        x_train, x_test, y_train, y_test = data_split(x, y, test_size)
-        
-        # Otomatik model seçimi veya normal model eğitimi
+        # Model eğitimi - ModelService kullan
         if use_auto_model_selection:
-            # Tüm modelleri test et ve en iyisini bul
-            best_result = find_best_model(x_train, y_train, x_test, y_test, detailed_mode=use_detailed_mode)
-            reg = best_result['model']
-            y_pred = best_result['predictions']
-            score = best_result['r2_score']
-            model_type = best_result['model_name']  # En iyi modelin adını güncelle
-            model_params = best_result['best_params']  # En iyi parametreleri güncelle
-            
-            # Karşılaştırma özetini konsola yazdır (flash mesajı yok)
-            comparison_summary = get_model_comparison_summary(best_result)
-            pass
-            
+            result = ModelService.train_auto_model(
+                processed_data['X_train'], processed_data['y_train'],
+                processed_data['X_test'], processed_data['y_test'],
+                detailed_mode=use_detailed_mode
+            )
+            model_type = result['model_type']  # Auto seçimde model tipini güncelle
         else:
-            # Normal model eğitimi (mevcut kod)
-            reg, y_pred, score = select_model(x_train, y_train, x_test, y_test, model_type, model_params, use_grid_search)
-        # Model objelerini global değişkenlere at
-        CURRENT_MODEL = reg
-        CURRENT_ENCODERS = encoders
-        CURRENT_SCALER = scaler
+            result = ModelService.train_single_model(
+                processed_data['X_train'], processed_data['y_train'],
+                processed_data['X_test'], processed_data['y_test'],
+                model_type, model_params, use_grid_search
+            )
         
-        # Şimdilik örnek sonuçlar (siz gerçek ML kodunu yazacaksınız)
-        model_performance = analyze_model(y_test, y_pred)
+        # Global değişkenlere ata
+        CURRENT_MODEL = result['model']
+        CURRENT_ENCODERS = processed_data['encoders']
+        CURRENT_SCALER = processed_data['scaler']
+        
+        # Model performansı
+        model_performance = result['performance']
+        
+        # Model kaydetme - ModelService kullan
+        model_id, file_paths = ModelService.save_trained_model_complete(
+            result, target_column, feature_columns, filename,
+            processed_data['encoders'], processed_data['scaler']
+        )
         
         # Model bilgilerini session'a kaydet
         session['trained_model'] = {
@@ -195,29 +171,8 @@ def train_model():
             'test_size': test_size,
             'handle_missing': handle_missing,
             'performance': model_performance,
-            'trained_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')  # String'e çevir
+            'trained_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-
-        model_id = save_trained_model(
-            model_name="Model",
-            algorithm=model_type,
-            r2_score=model_performance["r2_score"],
-            mae=model_performance["mae"],
-            mse=model_performance["mse"],
-            rmse=model_performance["rmse"],
-            target_column=target_column,
-            feature_columns=feature_columns,
-            filename=filename,
-            model_params=model_params
-        )
-
-        # Model dosyalarını kaydet
-        file_paths = save_model_files(
-            model_id=model_id,
-            model_obj=CURRENT_MODEL,
-            encoders_obj=CURRENT_ENCODERS,
-            scaler_obj=CURRENT_SCALER
-        )
         
         # Session'a model ID'sini kaydet (objeler değil)
         session['current_model_id'] = model_id

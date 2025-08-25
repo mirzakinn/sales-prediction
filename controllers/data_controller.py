@@ -15,7 +15,7 @@ def select_columns(filename):
     Kolon seçimi sayfası - kullanıcı hangi kolonları analiz edeceğini seçer
     """
     try:
-        filepath = os.path.join('uploads', filename)
+        filepath = os.path.join('storage/uploads', filename)
         if not os.path.exists(filepath):
             flash('Dosya bulunamadı!', 'error')
             return redirect(url_for('upload.upload_file'))
@@ -57,9 +57,17 @@ def select_columns(filename):
                         pd.to_numeric(df[col].dropna().head(10), errors='raise')
                         column_types[col] = 'sayısal'
                     except:
-                        column_types[col] = 'metin'
+                        # Kategorik veri olarak kabul et
+                        unique_values = df[col].nunique()
+                        total_values = len(df[col].dropna())
+                        
+                        # Eğer unique değer sayısı toplam değerlerin %50'sinden azsa kategorik
+                        if unique_values < total_values * 0.5:
+                            column_types[col] = 'kategorik'
+                        else:
+                            column_types[col] = 'metin'  # Çok fazla unique değer varsa metin
             except Exception:
-                column_types[col] = 'metin'
+                column_types[col] = 'kategorik'  # Hata durumunda kategorik kabul et
         
         # Dosya bilgilerini session'a kaydet
         session['current_file'] = filename

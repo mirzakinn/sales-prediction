@@ -7,13 +7,13 @@ from flask import Flask
 import os
 from config import config
 from utils.file_utils import ensure_upload_folder
-from blueprints.main import main_bp
-from blueprints.upload import upload_bp
-from blueprints.data_processing import processing_bp
-from blueprints.model_training import training_bp
-from blueprints.predictions import prediction_bp
-from blueprints.results import results_bp
-from blueprints.model_management import management_bp
+from controllers.main_controller import main_bp
+from controllers.upload_controller import upload_bp
+from controllers.data_controller import processing_bp
+from controllers.training_controller import training_bp
+from controllers.prediction_controller import prediction_bp
+from controllers.management_controller import management_bp
+from controllers.results_controller import results_bp
 
 
 def create_app(config_name='default'):
@@ -24,7 +24,11 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Upload klasörünü oluştur
-    ensure_upload_folder(app.config['UPLOAD_FOLDER'])
+    ensure_upload_folder('storage/uploads')
+    
+    # Template ve static klasörlerini güncelle
+    app.template_folder = 'views/templates'
+    app.static_folder = 'views/static'
     
     # Blueprint'leri kaydet
     app.register_blueprint(main_bp)

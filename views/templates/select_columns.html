@@ -62,7 +62,9 @@
                                         <option value="">Hedef kolonunu seçin...</option>
                                         {% for col in columns %}
                                         {% if column_types[col] == 'sayısal' %}
-                                        <option value="{{ col }}">{{ col }} ({{ column_types[col] }})</option>
+                                        <option value="{{ col }}">{{ col }} 
+                                            <span class="badge bg-success">{{ column_types[col] }}</span>
+                                        </option>
                                         {% endif %}
                                         {% endfor %}
                                     </select>
@@ -82,15 +84,23 @@
                                     <div class="feature-selection" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
                                         {% for col in columns %}
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="feature_columns" value="{{ col }}" id="feature_{{ loop.index }}">
-                                            <label class="form-check-label" for="feature_{{ loop.index }}">
-                                                {{ col }} <small class="text-muted">({{ column_types[col] }})</small>
+                                            <input class="form-check-input" type="checkbox" name="feature_columns" value="{{ col }}" id="feature_{{ col }}"
+                                                   {% if column_types[col] == 'sayısal' or column_types[col] == 'kategorik' %}{% else %}disabled{% endif %}>
+                                            <label class="form-check-label" for="feature_{{ col }}">
+                                                {{ col }} 
+                                                <span class="badge 
+                                                    {% if column_types[col] == 'sayısal' %}bg-success
+                                                    {% elif column_types[col] == 'kategorik' %}bg-info
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ column_types[col] }}
+                                                </span>
                                             </label>
                                         </div>
                                         {% endfor %}
                                     </div>
                                     <small class="form-text text-muted">
-                                        En az bir özellik kolonu seçmelisiniz. Bu kolonlar modelinizin tahmin yapmak için kullanacağı verilerdir.
+                                        <span class="badge bg-success">sayısal</span> ve <span class="badge bg-info">kategorik</span> kolonlar seçilebilir. 
+                                        <span class="badge bg-secondary">metin</span> kolonlar çok fazla unique değer içerdiği için kullanılamaz.
                                     </small>
                                 </div>
                             </div>
