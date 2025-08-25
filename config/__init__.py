@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 # Base directory path
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 
 class Config:
     """Uygulama yapılandırma sınıfı"""

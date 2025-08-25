@@ -27,8 +27,8 @@ def create_app(config_name='default'):
     ensure_upload_folder('storage/uploads')
     
     # Template ve static klasörlerini güncelle
-    app.template_folder = 'views/templates'
-    app.static_folder = 'views/static'
+    app.template_folder = '../views/templates'
+    app.static_folder = '../views/static'
     
     # Blueprint'leri kaydet
     app.register_blueprint(main_bp)
@@ -58,22 +58,3 @@ def create_app(config_name='default'):
             return []
     
     return app
-
-
-if __name__ == '__main__':
-    # Yapılandırma adını al
-    config_name = os.environ.get('FLASK_ENV', 'development')
-    
-    # Uygulamayı oluştur
-    app = create_app(config_name)
-    
-    # Yapılandırma bilgilerini al
-    current_config = config[config_name]
-    
-    
-    # Uygulamayı çalıştır
-    app.run(
-        debug=current_config.DEBUG,
-        host=current_config.HOST,
-        port=current_config.PORT
-    )

@@ -177,10 +177,6 @@ def train_model():
         # Session'a model ID'sini kaydet (objeler değil)
         session['current_model_id'] = model_id
         session['current_model_ready'] = True
-        
-        flash(f'Model eğitildi! R² Score: {model_performance["r2_score"]:.3f}', 'success')
-        
-        flash(f'{model_type} modeli başarıyla eğitildi!', 'success')
         return render_template('training_results.html', 
                              model_info=session['trained_model'],
                              performance=model_performance)
