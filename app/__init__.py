@@ -10,7 +10,8 @@ from utils.file_utils import ensure_upload_folder
 from controllers.main_controller import main_bp
 from controllers.upload_controller import upload_bp
 from controllers.data_controller import processing_bp
-from controllers.training_controller import training_bp
+from controllers.configure_model_controller import configure_model_bp
+from controllers.training_model_controller import training_model_bp
 from controllers.prediction_controller import prediction_bp
 from controllers.management_controller import management_bp
 from controllers.results_controller import results_bp
@@ -34,7 +35,8 @@ def create_app(config_name='default'):
     app.register_blueprint(main_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(processing_bp)
-    app.register_blueprint(training_bp)
+    app.register_blueprint(configure_model_bp)
+    app.register_blueprint(training_model_bp)
     app.register_blueprint(prediction_bp)
     app.register_blueprint(results_bp)
     app.register_blueprint(management_bp)

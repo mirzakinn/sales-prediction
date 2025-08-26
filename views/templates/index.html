@@ -31,7 +31,7 @@
                 
                 <!-- 3. Model Eğit - Kolonlar seçildiyse aktif -->
                 {% if session.get('target_column') and session.get('feature_columns') %}
-                <a href="{{ url_for('training.configure_model') }}" class="btn btn-warning btn-lg">
+                <a href="{{ url_for('configure_model.configure_model') }}" class="btn btn-warning btn-lg">
                     <i class="fas fa-brain me-2"></i>3. Model Eğit
                 </a>
                 {% else %}

@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
@@ -36,7 +35,6 @@ def data_split(x, y, test_size):
     x_train, x_test, y_train, y_test = train_test_split(
     x, y, test_size=test_size, random_state=42)
     return x_train, x_test, y_train, y_test
-
 
 
 def analyze_model(y_test, y_pred):

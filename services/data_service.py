@@ -24,8 +24,7 @@ class DataService:
         # Eksik verileri işle
         df_processed = handle_missing_data(
             df_filtered, 
-            method=handle_missing,
-            target_column=target_column
+            method=handle_missing
         )
         
         # Outlier'ları işle

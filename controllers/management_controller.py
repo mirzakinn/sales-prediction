@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models.database.crud import get_all_models, get_model_by_id, delete_model
 from services.model_service import ModelService
+from config import Config
 
 management_bp = Blueprint('management', __name__)
 
@@ -45,7 +46,7 @@ def delete_model_route(model_id):
         import os
         from pathlib import Path
         
-        base_path = Path(__file__).parent.parent / 'storage'
+        base_path = Config.STORAGE_BASE_PATH
         
         files_to_delete = [
             base_path / 'models' / f'model_{model_id}.pkl',

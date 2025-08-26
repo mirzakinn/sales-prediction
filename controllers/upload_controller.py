@@ -6,7 +6,7 @@ import pandas as pd
 import os
 from werkzeug.utils import secure_filename
 from utils.file_utils import allowed_file
-from utils.data_utils import analyze_dataframe, read_file_by_extension
+from utils.data_utils import read_file_by_extension
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -41,9 +41,6 @@ def upload_file():
                 # Dosya türüne göre !!!!!!!!!!!!!!!!!!!!!!!!!okuma buraya bak
                 try:
                     df = read_file_by_extension(filepath, filename)
-                    
-                    # Veri analizi
-                    analyze_dataframe(df, filename)
                     
                     # Başarılı yükleme sonrası kolon seçimine yönlendir
                     flash(f'Dosya başarıyla yüklendi! ({df.shape[0]} satır, {df.shape[1]} kolon)', 'success')

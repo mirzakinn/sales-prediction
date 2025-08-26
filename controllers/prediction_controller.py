@@ -11,8 +11,7 @@ def make_prediction():
     """
     Tahmin yapma sayfası - eğitilmiş modelle yeni tahminler yapar
     """
-    global CURRENT_MODEL, CURRENT_ENCODERS, CURRENT_SCALER
-    
+     
     # Eğitilmiş model var mı kontrol et
     trained_model = session.get('trained_model')
     if not trained_model:

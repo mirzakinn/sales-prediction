@@ -27,22 +27,23 @@ def results():
             'sort_by': sort_by
         })
     
-    # Model objelerini oluştur
-    class ModelObject:
-        def __init__(self, row):
-            self.id = row[0]
-            self.model_type = row[1]
-            self.dataset_filename = row[2]
-            self.target_column = row[3]
-            self.feature_columns = row[4]
-            self.r2_score = row[5] if row[5] else 0
-            self.mae = row[6] if row[6] else 0
-            self.mse = row[7] if row[7] else 0
-            self.rmse = row[8] if row[8] else 0
-            self.model_params = row[9]
-            self.created_at = row[10]
-    
-    models = [ModelObject(row) for row in all_models]
+    # Model objelerini dictionary olarak oluştur (diğer controller'larla tutarlı)
+    models = []
+    for row in all_models:
+        model = {
+            'id': row[0],
+            'model_type': row[1],
+            'dataset_filename': row[2],
+            'target_column': row[3],
+            'feature_columns': row[4],
+            'r2_score': row[5] if row[5] else 0,
+            'mae': row[6] if row[6] else 0,
+            'mse': row[7] if row[7] else 0,
+            'rmse': row[8] if row[8] else 0,
+            'model_params': row[9],
+            'created_at': row[10]
+        }
+        models.append(model)
     
     # Tarihe göre filtreleme
     if date_filter != 'all':

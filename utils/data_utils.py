@@ -3,13 +3,6 @@ Veri analizi ve işleme fonksiyonları
 Bu dosya sizin veri analizi kodlarınız için hazırlanmıştır.
 """
 import pandas as pd
-import numpy as np
-
-def analyze_dataframe(df, filename):
-    """DataFrame'i analiz eder"""
-    numeric_columns = df.select_dtypes(include=['number']).columns
-    missing_data = df.isnull().sum()
-    return df
 
 def read_file_by_extension(filepath, filename):
     """Dosya uzantısına göre dosyayı okur ve hata yönetimi yapar"""
@@ -44,23 +37,13 @@ def read_file_by_extension(filepath, filename):
     except Exception as e:
         raise e
 
-# TODO: Buraya kendi veri işleme fonksiyonlarınızı ekleyebilirsiniz
-# Örnek fonksiyonlar:
-# def clean_data(df): ...
-# def handle_missing_values(df): ...
-# def feature_engineering(df): ...
-# def normalize_data(df): ...
-
-# Dosyanın sonuna ekle:
-
-def handle_missing_data(df, method='drop', target_column=None):
+def handle_missing_data(df, method='drop'):
     """
     Eksik verileri belirtilen yönteme göre işler
-    
+
     Args:
         df: DataFrame
         method: 'drop', 'mean', 'median'
-        target_column: Hedef kolon (özel işlem için)
     
     Returns:
         İşlenmiş DataFrame
@@ -117,7 +100,10 @@ def handle_outliers(df, columns=None): #Inter Quantile Range (IQR)
 
     if columns is None:
         columns = df_processed.select_dtypes(include=['number']).columns
-    
+    else:
+        numeric_columns = df_processed.select_dtypes(include=['number']).columns
+        columns = [col for col in columns if col in numeric_columns]
+
     for col in columns:
         q1 = df_processed[col].quantile(0.25)
         q3 = df_processed[col].quantile(0.75)
