@@ -6,7 +6,7 @@ Basit web sayfaları yaklaşımı - API yok.
 from flask import Flask
 import os
 from config import config
-from utils.file_utils import ensure_upload_folder
+from services.file_service import FileService
 from controllers.main_controller import main_bp
 from controllers.upload_controller import upload_bp
 from controllers.data_controller import processing_bp
@@ -25,7 +25,7 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Upload klasörünü oluştur
-    ensure_upload_folder('storage/uploads')
+    FileService.ensure_directory('storage/uploads')
     
     # Template ve static klasörlerini güncelle
     app.template_folder = '../views/templates'

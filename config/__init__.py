@@ -17,9 +17,16 @@ class Config:
     
     # Storage paths for ML models (otomatik klasör oluşturma)
     STORAGE_BASE_PATH = BASE_DIR / 'storage'
-    MODEL_STORAGE_PATH = STORAGE_BASE_PATH / 'trained_models'
-    ENCODER_STORAGE_PATH = STORAGE_BASE_PATH / 'encoders'
-    SCALER_STORAGE_PATH = STORAGE_BASE_PATH / 'scalers'
+    
+    # Folder names - centralized configuration
+    MODEL_FOLDER_NAME = 'models'
+    ENCODER_FOLDER_NAME = 'encoders'
+    SCALER_FOLDER_NAME = 'scalers'
+    
+    # Full paths
+    MODEL_STORAGE_PATH = STORAGE_BASE_PATH / MODEL_FOLDER_NAME
+    ENCODER_STORAGE_PATH = STORAGE_BASE_PATH / ENCODER_FOLDER_NAME
+    SCALER_STORAGE_PATH = STORAGE_BASE_PATH / SCALER_FOLDER_NAME
     
     # Database configuration
     DATABASE_URL = 'sqlite:///sales_prediction.db'

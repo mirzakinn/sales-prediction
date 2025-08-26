@@ -60,7 +60,7 @@ def results():
         filtered_models = []
         for model in models:
             try:
-                model_date = datetime.strptime(model.created_at, '%Y-%m-%d %H:%M:%S')
+                model_date = datetime.strptime(model['created_at'], '%Y-%m-%d %H:%M:%S')
                 if model_date >= start_date:
                     filtered_models.append(model)
             except:
@@ -71,21 +71,21 @@ def results():
     # R2 skoruna göre filtreleme
     if r2_filter != 'all':
         if r2_filter == 'high':  # R2 > 0.8
-            models = [m for m in models if m.r2_score > 0.8]
+            models = [m for m in models if m['r2_score'] > 0.8]
         elif r2_filter == 'medium':  # 0.5 < R2 <= 0.8
-            models = [m for m in models if 0.5 < m.r2_score <= 0.8]
+            models = [m for m in models if 0.5 < m['r2_score'] <= 0.8]
         elif r2_filter == 'low':  # R2 <= 0.5
-            models = [m for m in models if m.r2_score <= 0.5]
+            models = [m for m in models if m['r2_score'] <= 0.5]
     
     # Sıralama
     if sort_by == 'date_desc':
-        models.sort(key=lambda x: x.created_at, reverse=True)
+        models.sort(key=lambda x: x['created_at'], reverse=True)
     elif sort_by == 'date_asc':
-        models.sort(key=lambda x: x.created_at)
+        models.sort(key=lambda x: x['created_at'])
     elif sort_by == 'r2_desc':
-        models.sort(key=lambda x: x.r2_score, reverse=True)
+        models.sort(key=lambda x: x['r2_score'], reverse=True)
     elif sort_by == 'r2_asc':
-        models.sort(key=lambda x: x.r2_score)
+        models.sort(key=lambda x: x['r2_score'])
     
     return render_template('results_new.html', 
                          results=models,

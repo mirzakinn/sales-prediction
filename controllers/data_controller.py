@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import os
 import pandas as pd
 from utils.data_utils import read_file_by_extension
+from config import DevelopmentConfig
+from services.file_service import FileService
 
 processing_bp = Blueprint('processing', __name__)
 
@@ -11,9 +13,9 @@ def select_columns(filename):
     Kolon seçimi sayfası - kullanıcı hangi kolonları analiz edeceğini seçer
     """
     try:
-        filepath = os.path.join('storage/uploads', filename)
-        if not os.path.exists(filepath):
-            flash('Dosya bulunamadı!', 'error')
+        result = FileService.handle_file_upload(request.files.get('file'))
+        if not result['success']:
+            flash(result['message'], 'error')
             return redirect(url_for('upload.upload_file'))
         
         # CSV dosyasını oku ve kolonları al
