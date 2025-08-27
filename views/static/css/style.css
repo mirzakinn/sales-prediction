@@ -89,6 +89,11 @@ body {
     box-shadow: none;
     transition: transform 0.3s ease;
     flex: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
 }
 
 .logo-img:hover {
@@ -458,6 +463,11 @@ footer {
     object-fit: contain;
     filter: brightness(0.8);
     transition: filter 0.3s ease;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
 }
 
 .footer-logo:hover {

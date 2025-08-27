@@ -13,6 +13,7 @@ class Config:
     
     # File upload settings
     UPLOAD_FOLDER = 'uploads'
+    ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}
     MAX_CONTENT_LENGTH = 256 * 1024 * 1024  # 256MB max file size
     
     # Storage paths for ML models (otomatik klasör oluşturma)

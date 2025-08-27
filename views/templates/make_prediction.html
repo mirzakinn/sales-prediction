@@ -46,19 +46,41 @@
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <div class="form-group">
                                     <label for="{{ feature }}" style="color: #2c3e50; font-weight: 600;">
-                                        <i class="fas fa-chart-bar" style="color: #ff0000;"></i>
+                                        {% if column_types.get(feature) == 'categorical' %}
+                                            <i class="fas fa-list" style="color: #28a745;"></i>
+                                        {% else %}
+                                            <i class="fas fa-chart-bar" style="color: #ff0000;"></i>
+                                        {% endif %}
                                         {{ feature.replace('_', ' ').title() }}
                                     </label>
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="{{ feature }}" 
-                                           name="{{ feature }}" 
-                                           step="any" 
-                                           required
-                                           placeholder="{{ feature }} değerini girin">
-                                    <small class="form-text" style="color: #6c757d; font-weight: 500;">
-                                        Bu özellik için sayısal değer girin
-                                    </small>
+                                    
+                                    {% if column_types.get(feature) == 'categorical' and categorical_values.get(feature) %}
+                                        <!-- Kategorik kolon için dropdown -->
+                                        <select class="form-control" 
+                                                id="{{ feature }}" 
+                                                name="{{ feature }}" 
+                                                required>
+                                            <option value="">{{ feature }} seçin...</option>
+                                            {% for value in categorical_values[feature] %}
+                                                <option value="{{ value }}">{{ value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text" style="color: #6c757d; font-weight: 500;">
+                                            Bu özellik için kategori seçin
+                                        </small>
+                                    {% else %}
+                                        <!-- Sayısal kolon için input -->
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="{{ feature }}" 
+                                               name="{{ feature }}" 
+                                               step="any" 
+                                               required
+                                               placeholder="{{ feature }} değerini girin">
+                                        <small class="form-text" style="color: #6c757d; font-weight: 500;">
+                                            Bu özellik için sayısal değer girin
+                                        </small>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% endfor %}
@@ -112,6 +134,8 @@
 // Örnek veri doldurma fonksiyonları
 function fillSampleData(example) {
     const features = {{ feature_columns | tojson }};
+    const columnTypes = {{ column_types | tojson }};
+    const categoricalValues = {{ categorical_values | tojson }};
     
     // Örnek veriler (gerçek projenizde farklı değerler kullanabilirsiniz)
     const sampleData = {
@@ -130,12 +154,22 @@ function fillSampleData(example) {
     };
     
     features.forEach(feature => {
-        const input = document.getElementById(feature);
-        if (input && sampleData[example][feature] !== undefined) {
-            input.value = sampleData[example][feature];
-        } else if (input) {
-            // Varsayılan değer
-            input.value = Math.floor(Math.random() * 100) + 1;
+        const element = document.getElementById(feature);
+        if (element) {
+            if (columnTypes[feature] === 'categorical' && categoricalValues[feature]) {
+                // Kategorik kolon için rastgele değer seç
+                if (categoricalValues[feature].length > 0) {
+                    const randomIndex = Math.floor(Math.random() * categoricalValues[feature].length);
+                    element.value = categoricalValues[feature][randomIndex];
+                }
+            } else {
+                // Sayısal kolon için örnek değer
+                if (sampleData[example][feature] !== undefined) {
+                    element.value = sampleData[example][feature];
+                } else {
+                    element.value = Math.floor(Math.random() * 100) + 1;
+                }
+            }
         }
     });
 }
@@ -143,24 +177,24 @@ function fillSampleData(example) {
 function clearForm() {
     const features = {{ feature_columns | tojson }};
     features.forEach(feature => {
-        const input = document.getElementById(feature);
-        if (input) {
-            input.value = '';
+        const element = document.getElementById(feature);
+        if (element) {
+            element.value = '';
         }
     });
 }
 
 // Form validasyonu
 document.querySelector('form').addEventListener('submit', function(e) {
-    const inputs = this.querySelectorAll('input[required]');
+    const requiredElements = this.querySelectorAll('input[required], select[required]');
     let allFilled = true;
     
-    inputs.forEach(input => {
-        if (!input.value.trim()) {
+    requiredElements.forEach(element => {
+        if (!element.value.trim()) {
             allFilled = false;
-            input.classList.add('is-invalid');
+            element.classList.add('is-invalid');
         } else {
-            input.classList.remove('is-invalid');
+            element.classList.remove('is-invalid');
         }
     });
     

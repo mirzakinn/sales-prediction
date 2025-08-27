@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 import lightgbm as lgb
 import numpy as np
+import pandas as pd
 import time
 import sys
 import io
@@ -20,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import signal
 
 
-def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=False, max_time_per_model=300):
+def auto_select_best_model(x_train, x_test, y_train, y_test, feature_columns=None, timeout_seconds=300):
     """
     Tüm mevcut algoritmaları test ederek en iyi performansı veren modeli bulur.
     
@@ -57,6 +58,9 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
     elif is_large_dataset:
         detailed_mode = False
         cv_folds = 3
+    else:
+        detailed_mode = True
+        cv_folds = 5
     
     # Sampling fonksiyonu
     def smart_sample(x_train, y_train, x_test, y_test, sample_size=80000):
@@ -306,16 +310,36 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
                 verbose=0
             )
             
-            grid_search.fit(x_train_work, y_train_work)
-            
-            # En iyi modeli test et
-            best_model = grid_search.best_estimator_
-            
-            # Büyük dataset ise final modeli tam veri ile eğit
-            if is_huge_dataset or is_massive_dataset:
-                best_model.fit(x_train, y_train)
-            
-            y_pred = best_model.predict(x_test)
+            # LGBMRegressor için DataFrame kullan
+            if model_name == 'lightgbm':
+                # DataFrame'e çevir
+                x_train_work_df = pd.DataFrame(x_train_work, columns=feature_columns)
+                y_train_work_df = pd.Series(y_train_work)
+                
+                grid_search.fit(x_train_work_df, y_train_work_df)
+                
+                # En iyi modeli test et
+                best_model = grid_search.best_estimator_
+                
+                # Büyük dataset ise final modeli tam veri ile eğit
+                if is_huge_dataset or is_massive_dataset:
+                    x_train_df = pd.DataFrame(x_train, columns=feature_columns)
+                    y_train_df = pd.Series(y_train)
+                    best_model.fit(x_train_df, y_train_df)
+                
+                x_test_df = pd.DataFrame(x_test, columns=feature_columns)
+                y_pred = best_model.predict(x_test_df)
+            else:
+                grid_search.fit(x_train_work, y_train_work)
+                
+                # En iyi modeli test et
+                best_model = grid_search.best_estimator_
+                
+                # Büyük dataset ise final modeli tam veri ile eğit
+                if is_huge_dataset or is_massive_dataset:
+                    best_model.fit(x_train, y_train)
+                
+                y_pred = best_model.predict(x_test)
             
             # Performans metrikleri hesapla
             from sklearn.metrics import r2_score as r2_metric
@@ -325,8 +349,12 @@ def find_best_model(x_train, y_train, x_test, y_test, cv_folds=5, detailed_mode=
             rmse = np.sqrt(mse)
             
             # Cross-validation skoru
-            cv_data_x = x_train_work if (is_huge_dataset or is_massive_dataset) else x_train
-            cv_data_y = y_train_work if (is_huge_dataset or is_massive_dataset) else y_train
+            if model_name == 'lightgbm':
+                cv_data_x = x_train_work_df if (is_huge_dataset or is_massive_dataset) else pd.DataFrame(x_train, columns=feature_columns)
+                cv_data_y = y_train_work_df if (is_huge_dataset or is_massive_dataset) else pd.Series(y_train)
+            else:
+                cv_data_x = x_train_work if (is_huge_dataset or is_massive_dataset) else x_train
+                cv_data_y = y_train_work if (is_huge_dataset or is_massive_dataset) else y_train
             cv_scores = cross_val_score(best_model, cv_data_x, cv_data_y, cv=cv_folds, scoring='r2')
             cv_mean = cv_scores.mean()
             cv_std = cv_scores.std()

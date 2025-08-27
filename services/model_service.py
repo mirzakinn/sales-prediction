@@ -3,7 +3,7 @@
 import sqlite3
 from pathlib import Path
 from models.ml_models.model_selector import select_model
-from utils.auto_model_selector import find_best_model
+from utils.auto_model_selector import auto_select_best_model
 from utils.ml_utils import analyze_model
 from utils.file_utils import save_model_files
 from models.database.crud import save_trained_model
@@ -35,13 +35,13 @@ class ModelService:
         }
     
     @staticmethod
-    def train_auto_model(x_train, y_train, x_test, y_test, detailed_mode=False):
+    def train_auto_model(x_train, y_train, x_test, y_test, feature_columns=None, detailed_mode=False):
         """
         Otomatik model seçimi yapar
         """
-        best_result = find_best_model(
-            x_train, y_train, x_test, y_test, 
-            detailed_mode=detailed_mode
+        best_result = auto_select_best_model(
+            x_train, x_test, y_train, y_test, 
+            feature_columns=feature_columns
         )
         
         # Performance hesaplama - y_test'i parametre olarak kullan

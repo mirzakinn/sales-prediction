@@ -1,9 +1,8 @@
 """Veri işleme servisleri"""
 
-import pandas as pd
-import os
 from utils.data_utils import read_file_by_extension, handle_missing_data, handle_outliers
 from utils.ml_utils import encoding_data, scaling_data, data_split
+from services.analysis_service import AnalysisService
 
 class DataService:
     """Veri işleme işlemlerini yöneten servis sınıfı"""
@@ -61,3 +60,54 @@ class DataService:
                 'percentage': round((missing_count / len(df)) * 100, 2)
             }
         return missing_data
+    
+    @staticmethod
+    def analyze_file(filepath, filename):
+        """Dosya analizi ve kolon tipi belirleme"""
+        try:
+            # DataFrame yükle ve doğrula
+            validation = AnalysisService.load_dataframe(filepath, filename)
+            if not validation['valid']:
+                return {
+                    'success': False,
+                    'message': validation['message']
+                }
+            
+            # DataFrame al ve temizle
+            df = AnalysisService.clean_dataframe(validation['dataframe'])
+            columns = df.columns.tolist()
+            
+            # Preview data hazırla
+            preview_data = AnalysisService.get_preview_data(df)
+            
+            # Kolon tiplerini belirle
+            column_types = AnalysisService.determine_column_types(df)
+            
+            return {
+                'success': True,
+                'message': f'Dosya başarıyla analiz edildi! ({df.shape[0]} satır, {df.shape[1]} kolon)',
+                'data': {
+                    'filename': filename,
+                    'filepath': filepath,
+                    'columns': columns,
+                    'column_types': column_types,
+                    'preview_data': preview_data,
+                    'df_shape': df.shape
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Dosya analizi hatası: {str(e)}'
+            }
+    
+    @staticmethod
+    def get_dataframe_info(filepath, filename):
+        """DataFrame temel bilgilerini al"""
+        validation = AnalysisService.load_dataframe(filepath, filename)
+        if not validation['valid']:
+            return None
+        
+        df = AnalysisService.clean_dataframe(validation['dataframe'])
+        return AnalysisService.analyze_dataframe_structure(df)

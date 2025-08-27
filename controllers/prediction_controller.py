@@ -58,13 +58,27 @@ def make_prediction():
                 
                 # Kategorik kolonları encode et
                 encoders = model_objects['encoders']
+                
+                # DataFrame oluştur ve encode et
+                input_df = pd.DataFrame([prediction_data])
+                for col in input_df.columns:
+                    if col in encoders:
+                        try:
+                            input_df[col] = encoders[col].transform([str(prediction_data[col])])[0]
+                        except:
+                            # Bilinmeyen kategori varsa, en sık kullanılan kategoriyi kullan
+                            most_common = encoders[col].classes_[0]
+                            input_df[col] = encoders[col].transform([most_common])[0]
+                
                 # Feature'ları doğru sırayla al ve scale et
-                feature_values = pd.DataFrame([prediction_data])[trained_model['feature_columns']].values
+                feature_df = input_df[trained_model['feature_columns']]
                 scaler = model_objects['scaler']
-                input_scaled = scaler.transform(feature_values)
-                # Tahmin yap
+                input_scaled = scaler.transform(feature_df.values)
+                
+                # DataFrame ile tahmin yap (feature names korunur)
                 model = model_objects['model']
-                prediction = model.predict(input_scaled)[0]
+                input_scaled_df = pd.DataFrame(input_scaled, columns=trained_model['feature_columns'])
+                prediction = model.predict(input_scaled_df)[0]
             else:
                 # Normal eğitimden sonra tahmin yapma - Model ID'sinden dosya yükle
                 
@@ -98,11 +112,12 @@ def make_prediction():
                                     input_df[col] = session_encoders[col].transform([most_common])[0]
                         
                         # Feature'ları doğru sırayla al ve scale et
-                        feature_values = input_df[trained_model['feature_columns']].values
-                        input_scaled = session_scaler.transform(feature_values)
+                        feature_df = input_df[trained_model['feature_columns']]
+                        input_scaled = session_scaler.transform(feature_df.values)
                         
-                        # Tahmin yap
-                        prediction = session_model.predict(input_scaled)[0]
+                        # DataFrame ile tahmin yap (feature names korunur)
+                        input_scaled_df = pd.DataFrame(input_scaled, columns=trained_model['feature_columns'])
+                        prediction = session_model.predict(input_scaled_df)[0]
                     else:
                         flash('Model dosyaları yüklenemedi!', 'error')
                         return redirect(url_for('upload.upload_file'))
@@ -123,11 +138,12 @@ def make_prediction():
                                 input_df[col] = globals.CURRENT_ENCODERS[col].transform([most_common])[0]
                     
                     # Feature'ları doğru sırayla al ve scale et
-                    feature_values = input_df[trained_model['feature_columns']].values
-                    input_scaled = globals.CURRENT_SCALER.transform(feature_values)
+                    feature_df = input_df[trained_model['feature_columns']]
+                    input_scaled = globals.CURRENT_SCALER.transform(feature_df.values)
                     
-                    # Tahmin yap
-                    prediction = globals.CURRENT_MODEL.predict(input_scaled)[0]
+                    # DataFrame ile tahmin yap (feature names korunur)
+                    input_scaled_df = pd.DataFrame(input_scaled, columns=trained_model['feature_columns'])
+                    prediction = globals.CURRENT_MODEL.predict(input_scaled_df)[0]
                 else:
                     flash('Model objeleri bulunamadı. Lütfen önce bir model eğitin.', 'error')
                     return redirect(url_for('upload.upload_file'))
@@ -147,9 +163,42 @@ def make_prediction():
             return redirect(url_for('prediction.make_prediction'))
     
     # GET isteği - Tahmin formunu göster
+    # Column types ve categorical values'ları hazırla
+    column_types = {}
+    categorical_values = {}
+    
+    try:
+        # Session'dan column types'ı al (eğer varsa)
+        if 'column_types' in session:
+            column_types = session['column_types']
+        
+        # Model objelerini yükle ve categorical values'ları çıkar
+        current_model_id = session.get('current_model_id')
+        if current_model_id:
+            from utils.file_utils import load_model_files
+            model_objects = load_model_files(current_model_id)
+            if model_objects and 'encoders' in model_objects:
+                encoders = model_objects['encoders']
+                for col_name, encoder in encoders.items():
+                    if hasattr(encoder, 'classes_'):
+                        categorical_values[col_name] = encoder.classes_.tolist()
+                        column_types[col_name] = 'categorical'
+        
+        # Eğer column_types yoksa, feature columns'ları numeric olarak varsay
+        for feature in trained_model['feature_columns']:
+            if feature not in column_types:
+                column_types[feature] = 'numeric'
+                
+    except Exception as e:
+        # Hata durumunda tüm kolonları numeric olarak varsay
+        for feature in trained_model['feature_columns']:
+            column_types[feature] = 'numeric'
+    
     return render_template('make_prediction.html', 
                          model_info=trained_model,
-                         feature_columns=trained_model['feature_columns'])
+                         feature_columns=trained_model['feature_columns'],
+                         column_types=column_types,
+                         categorical_values=categorical_values)
 
 @prediction_bp.route('/make-prediction-new', methods=['GET', 'POST'])
 def make_prediction_new():
@@ -228,11 +277,38 @@ def make_prediction_new():
             session['trained_model'] = model_info_for_template
             session['prediction_mode_active'] = True
             
+            # Column types ve categorical values'ları hazırla
+            column_types = {}
+            categorical_values = {}
+            
+            try:
+                # Model objelerini yükle ve categorical values'ları çıkar
+                from utils.file_utils import load_model_files
+                model_objects = load_model_files(model_info['id'])
+                if model_objects and 'encoders' in model_objects:
+                    encoders = model_objects['encoders']
+                    for col_name, encoder in encoders.items():
+                        if hasattr(encoder, 'classes_'):
+                            categorical_values[col_name] = encoder.classes_.tolist()
+                            column_types[col_name] = 'categorical'
+                
+                # Eğer column_types yoksa, feature columns'ları numeric olarak varsay
+                for feature in feature_columns:
+                    if feature not in column_types:
+                        column_types[feature] = 'numeric'
+                        
+            except Exception as e:
+                # Hata durumunda tüm kolonları numeric olarak varsay
+                for feature in feature_columns:
+                    column_types[feature] = 'numeric'
+            
             # Direkt tahmin sayfasına git
             flash(f'{model_info["model_type"].title()} modeli ile tahmin yapabilirsiniz.', 'success')
             return render_template('make_prediction.html', 
                                  model_info=model_info_for_template,
-                                 feature_columns=feature_columns)
+                                 feature_columns=feature_columns,
+                                 column_types=column_types,
+                                 categorical_values=categorical_values)
                                  
         except Exception as e:
             pass

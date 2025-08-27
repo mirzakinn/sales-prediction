@@ -53,7 +53,7 @@ class FileService:
                 }
             
             # Upload klasörü oluştur
-            FileService.ensure_directory(FileService.UPLOAD_FOLDER)
+            FileService.ensure_directory(DevelopmentConfig.UPLOAD_FOLDER)
             
             # Dosyayı kaydet
             filename = secure_filename(file.filename)
