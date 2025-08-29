@@ -52,7 +52,7 @@
                             {% endif %}
                             
                             {% if session.get('trained_model') %}
-                            <li><a class="dropdown-item" href="{{ url_for('prediction.make_prediction') }}">Tahmin Yap</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('prediction.make_prediction_get') }}">Tahmin Yap</a></li>
                             {% else %}
                             <li><a class="dropdown-item disabled" href="#" title="Önce model eğitin">Tahmin Yap</a></li>
                             {% endif %}

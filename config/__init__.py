@@ -31,6 +31,7 @@ class Config:
     
     # Database configuration
     DATABASE_URL = 'sqlite:///sales_prediction.db'
+    DATABASE_PATH = 'sales_prediction.db'
     
     @staticmethod
     def create_storage_directories():
@@ -52,7 +53,7 @@ class DevelopmentConfig(Config):
     PORT = 5000
 
 class ProductionConfig(Config):
-    """Prodüksiyon ortamı Ayapılandırması"""
+    """Prodüksiyon ortamı yapılandırması"""
     DEBUG = False
     HOST = '0.0.0.0'
     PORT = int(os.environ.get('PORT', 5000))

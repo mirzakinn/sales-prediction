@@ -96,7 +96,8 @@ class ModelService:
         globals.CURRENT_SCALER = None
         
         # Database bağlantısı
-        conn = sqlite3.connect('sales_prediction.db')
+        from config import Config
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         cursor = conn.cursor()
         
         try:
@@ -116,7 +117,7 @@ class ModelService:
             conn.close()
         
         # Model dosyalarını sil
-        storage_path = Path('storage')
+        storage_path = Config.STORAGE_BASE_PATH
         deleted_count = 0
         
         # Models klasörü

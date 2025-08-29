@@ -8,7 +8,7 @@ def read_file_by_extension(filepath, filename):
     """Dosya uzantısına göre dosyayı okur ve hata yönetimi yapar"""
     try:
         if filename.lower().endswith('.csv'):
-            # CSV için farklı encoding ve separator denemeleriyapalım
+            # CSV için farklı encoding ve separator denemeleri yapalım
             encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
             separators = [',', ';', '\t']
             
@@ -35,7 +35,7 @@ def read_file_by_extension(filepath, filename):
             raise ValueError(f"Desteklenmeyen dosya formatı: {filename}")
             
     except Exception as e:
-        raise e
+        raise
 
 def handle_missing_data(df, method='drop'):
     """

@@ -68,5 +68,3 @@ def delete_model(model_id):
         cursor.execute("DELETE FROM trained_models WHERE id = ?", (model_id,))
 
         conn.commit()
-
-        

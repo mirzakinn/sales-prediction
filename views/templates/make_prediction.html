@@ -40,7 +40,7 @@
                     </div>
 
                     <!-- Tahmin Formu -->
-                    <form method="POST" action="{{ url_for('prediction.make_prediction') }}">
+                    <form method="POST" action="{{ url_for('prediction.make_prediction_post') }}">
                         <div class="row">
                             {% for feature in feature_columns %}
                             <div class="col-md-6 col-lg-4 mb-3">

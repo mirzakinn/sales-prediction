@@ -78,5 +78,4 @@ def load_model_files(model_id):
         }
         
     except Exception as e:
-        pass
         return None

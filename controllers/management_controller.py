@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import os
+from pathlib import Path
 from models.database.crud import get_all_models, get_model_by_id, delete_model
 from services.model_service import ModelService
 from config import Config
@@ -43,9 +45,6 @@ def delete_model_route(model_id):
         delete_model(model_id)
         
         # Model dosyalarını da sil
-        import os
-        from pathlib import Path
-        
         base_path = Config.STORAGE_BASE_PATH
         
         files_to_delete = [
@@ -60,7 +59,6 @@ def delete_model_route(model_id):
             if file_path.exists():
                 os.remove(file_path)
                 deleted_files.append(file_path.name)
-        
         
         flash(f'Model başarıyla silindi! (ID: {model_id})', 'success')
         return redirect(url_for('management.results'))

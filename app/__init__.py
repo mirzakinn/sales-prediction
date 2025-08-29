@@ -5,6 +5,7 @@ Basit web sayfaları yaklaşımı - API yok.
 """
 from flask import Flask
 import os
+import json
 from config import config
 from services.file_service import FileService
 from controllers.main_controller import main_bp
@@ -51,12 +52,11 @@ def create_app(config_name='default'):
     @app.template_filter('from_json')
     def from_json_filter(value):
         """JSON string'i Python objesine çevirir"""
-        import json
         try:
             if isinstance(value, str):
                 return json.loads(value)
             return value
-        except:
+        except (json.JSONDecodeError, TypeError):
             return []
     
     return app

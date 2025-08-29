@@ -13,7 +13,8 @@ Responsibilities:
 """
 
 # Database dosya yolu
-DB_PATH = 'sales_prediction.db'
+from config import Config
+DB_PATH = Config.DATABASE_PATH
 
 def init_database():
     """
